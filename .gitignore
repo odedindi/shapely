@@ -1,0 +1,14 @@
+
+.yarn
+!.yarn/releases
+
+# Ignore all node_modules folders
+node_modules/
+
+# tsbuild output
+dist/
+build/
+*.tsbuildinfo
+
+# Dev logs
+logs/
