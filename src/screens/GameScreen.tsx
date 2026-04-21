@@ -233,7 +233,7 @@ export default function GameScreen() {
         />
 
         <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center">
+          <div className="flex-1 min-h-0 overflow-auto">
             {store.board && (
                 <GameBoard
                   board={store.board}
