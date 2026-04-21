@@ -31,14 +31,14 @@ export default function GameBoard({
   const mid = gridSize / 2
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-2 md:p-4">
+    <div className="min-h-full flex items-center justify-center p-2 md:p-4">
       <div
         className="board-dot-bg rounded-2xl bg-[var(--color-surface-alt)] shadow-sm border border-[var(--color-border)] p-3 md:p-4 lg:p-5"
         style={{
           display: 'grid',
-          gridTemplateColumns: `min-content repeat(${gridSize}, minmax(44px, 96px))`,
-          gridTemplateRows: `min-content repeat(${gridSize}, minmax(44px, 96px))`,
-          gap: 'clamp(4px, 1vw, 8px)',
+          gridTemplateColumns: `min-content repeat(${gridSize}, minmax(clamp(36px, calc((min(100vw, 100vh) - 120px) / ${gridSize + 1}), 96px), 96px))`,
+          gridTemplateRows: `min-content repeat(${gridSize}, minmax(clamp(36px, calc((min(100vw, 100vh) - 120px) / ${gridSize + 1}), 96px), 96px))`,
+          gap: 'clamp(3px, 0.8vw, 8px)',
         }}
       >
         <div />
