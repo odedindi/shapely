@@ -71,39 +71,30 @@ export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }
   }
 
   if (mode === 'fill') {
-    const clipId = `${uid}-clip`
+    const maskId = `${uid}-mask`
     const patId = `${uid}-pat`
 
-    const clipColor = paramsA.fillColor
+    const [, , vbW, vbH] = shapeA.viewBox.split(' ').map(Number)
+    const [, , vbTW, vbTH] = shapeB.viewBox.split(' ').map(Number)
+    const clipScale = `scale(${VB / vbW} ${VB / vbH})`
+    const tileScale = `scale(${TILE / vbTW} ${TILE / vbTH})`
 
     const clipBody = shapeA.svgBody({ ...paramsA, fillColor: 'white', strokeColor: 'white', strokeWidth: 0, opacity: 1 })
     const tileBody = shapeB.svgBody({ ...paramsB, strokeColor: 'none', strokeWidth: 0 })
 
-    const [, , vbAW, vbAH] = shapeA.viewBox.split(' ').map(Number)
-    const [, , vbBW, vbBH] = shapeB.viewBox.split(' ').map(Number)
-    const clipScaleX = VB / vbAW
-    const clipScaleY = VB / vbAH
-    const tileScaleX = TILE / vbBW
-    const tileScaleY = TILE / vbBH
-
     return (
       <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`}>
         <defs>
-          <clipPath id={clipId}>
-            <g
-              transform={`scale(${clipScaleX} ${clipScaleY})`}
-              dangerouslySetInnerHTML={{ __html: clipBody }}
-            />
-          </clipPath>
+          <mask id={maskId} maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width={VB} height={VB}>
+            <rect width={VB} height={VB} fill="black" />
+            <g transform={clipScale} dangerouslySetInnerHTML={{ __html: clipBody }} />
+          </mask>
           <pattern id={patId} x="0" y="0" width={TILE} height={TILE} patternUnits="userSpaceOnUse">
-            <rect width={TILE} height={TILE} fill={clipColor} opacity="0.25" />
-            <g
-              transform={`scale(${tileScaleX} ${tileScaleY})`}
-              dangerouslySetInnerHTML={{ __html: tileBody }}
-            />
+            <rect width={TILE} height={TILE} fill={paramsA.fillColor} opacity="0.25" />
+            <g transform={tileScale} dangerouslySetInnerHTML={{ __html: tileBody }} />
           </pattern>
         </defs>
-        <rect width={VB} height={VB} fill={`url(#${patId})`} clipPath={`url(#${clipId})`} />
+        <rect width={VB} height={VB} fill={`url(#${patId})`} mask={`url(#${maskId})`} />
       </svg>
     )
   }

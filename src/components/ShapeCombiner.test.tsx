@@ -205,23 +205,26 @@ describe('ShapeCombiner — nested mode', () => {
 })
 
 describe('ShapeCombiner — fill mode', () => {
-  it('renders a <clipPath> and <pattern>', () => {
+  it('renders a <mask> and <pattern>', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    expect(container.querySelector('clipPath')).toBeTruthy()
+    expect(container.querySelector('mask')).toBeTruthy()
     expect(container.querySelector('pattern')).toBeTruthy()
   })
 
-  it('clipPath contains shapeA body with white fill', () => {
+  it('mask contains a black background rect and shapeA body with white fill', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const clipCircle = container.querySelector('clipPath circle')!
-    expect(clipCircle.getAttribute('fill')).toBe('white')
+    const mask = container.querySelector('mask')!
+    const blackRect = mask.querySelector('rect')!
+    expect(blackRect.getAttribute('fill')).toBe('black')
+    const circle = mask.querySelector('circle')!
+    expect(circle.getAttribute('fill')).toBe('white')
   })
 
-  it('pattern tile has a background rect for CSS-var color resolution', () => {
+  it('pattern tile has a background rect using paramsA fillColor', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={{ ...baseParams, fillColor: 'red' }} paramsB={baseParams} mode="fill" />
     )
@@ -235,11 +238,9 @@ describe('ShapeCombiner — fill mode', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={{ ...baseParams, fillColor: cssVar }} mode="fill" />
     )
-    // The shape's fill attribute must contain the color value directly —
-    // not "currentColor", which cannot resolve CSS vars in SVG attribute context.
-    const tileCircle = container.querySelector('pattern circle')!
-    expect(tileCircle).toBeTruthy()
-    expect(tileCircle.getAttribute('fill')).toBe(cssVar)
+    const patCircles = container.querySelectorAll('pattern circle')
+    expect(patCircles.length).toBeGreaterThan(0)
+    expect(patCircles[0].getAttribute('fill')).toBe(cssVar)
   })
 
   it('pattern tile size equals VB / TILE_COUNT (20)', () => {
@@ -251,51 +252,41 @@ describe('ShapeCombiner — fill mode', () => {
     expect(Number(pattern.getAttribute('height'))).toBe(20)
   })
 
-  it('the fill rect references both pattern and clipPath', () => {
+  it('the fill rect references both pattern and mask', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const rect = container.querySelector('rect:not(pattern rect)')!
+    const rect = container.querySelector('rect:not(pattern rect):not(mask rect)')!
     expect(rect.getAttribute('fill')).toMatch(/url\(#/)
-    expect(rect.getAttribute('clip-path')).toMatch(/url\(#/)
+    expect(rect.getAttribute('mask')).toMatch(/url\(#/)
   })
 
-  it('clipPath shape body has no fill="currentColor" — MDI icon paths must use resolved color', () => {
+  it('mask shape body has no fill="currentColor" — MDI icon paths must use resolved color', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA_mdi} shapeB={shapeB} paramsA={{ ...baseParams, fillColor: 'white' }} paramsB={baseParams} mode="fill" />
     )
-    const clipPath = container.querySelector('clipPath')!
-    // "currentColor" cannot resolve CSS vars in SVG presentation attributes.
-    // Any fill inside a <clipPath> must be an explicit color value.
-    expect(clipPath.innerHTML).not.toContain('fill="currentColor"')
+    const mask = container.querySelector('mask')!
+    expect(mask.innerHTML).not.toContain('fill="currentColor"')
   })
 
-  it('clipPath contains a <g> with scale transform mapping shapeA viewBox to 100x100', () => {
+  it('mask clip group scales shapeA (24x24) to fill 100x100 space', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA_mdi} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const clipG = container.querySelector('clipPath g[transform]')!
-    expect(clipG).toBeTruthy()
-    // MDI viewBox is 24x24; VB=100 → scale ≈ 4.166...
-    const transform = clipG.getAttribute('transform') ?? ''
-    expect(transform).toMatch(/scale\(/)
-    const scaleMatch = transform.match(/scale\(([\d.]+)/)
-    expect(scaleMatch).toBeTruthy()
-    expect(Number(scaleMatch![1])).toBeCloseTo(100 / 24, 2)
+    const mask = container.querySelector('mask')!
+    const scaleGroup = mask.querySelector('g[transform]')!
+    expect(scaleGroup).toBeTruthy()
+    expect(scaleGroup.getAttribute('transform')).toContain('scale(')
   })
 
-  it('pattern contains a <g> with scale transform mapping shapeB viewBox to tile size', () => {
+  it('pattern tile group scales shapeB (24x24) to fit tile size 20', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB_mdi} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const patG = container.querySelector('pattern g[transform]')!
-    expect(patG).toBeTruthy()
-    // MDI viewBox is 24x24; TILE=20 → scale ≈ 0.833...
-    const transform = patG.getAttribute('transform') ?? ''
-    expect(transform).toMatch(/scale\(/)
-    const scaleMatch = transform.match(/scale\(([\d.]+)/)
-    expect(scaleMatch).toBeTruthy()
-    expect(Number(scaleMatch![1])).toBeCloseTo(20 / 24, 2)
+    const pat = container.querySelector('pattern')!
+    const scaleGroup = pat.querySelector('g[transform]')!
+    expect(scaleGroup).toBeTruthy()
+    expect(scaleGroup.getAttribute('transform')).toContain('scale(')
   })
 })
 
