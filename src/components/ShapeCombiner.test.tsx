@@ -230,14 +230,16 @@ describe('ShapeCombiner — fill mode', () => {
     expect(patRect.getAttribute('fill')).toBe('red')
   })
 
-  it('pattern tile <g> uses color attribute for currentColor inheritance', () => {
+  it('pattern tile shape body receives fillColor directly (works with CSS vars)', () => {
+    const cssVar = 'var(--shape-color-1)'
     const { container } = render(
-      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={{ ...baseParams, fillColor: 'blue' }} mode="fill" />
+      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={{ ...baseParams, fillColor: cssVar }} mode="fill" />
     )
-    const patG = container.querySelector('pattern g[color]')!
-    expect(patG).toBeTruthy()
-    expect(patG.getAttribute('color')).toBe('blue')
-    expect(patG.getAttribute('fill')).toBe('currentColor')
+    // The shape's fill attribute must contain the color value directly —
+    // not "currentColor", which cannot resolve CSS vars in SVG attribute context.
+    const tileCircle = container.querySelector('pattern circle')!
+    expect(tileCircle).toBeTruthy()
+    expect(tileCircle.getAttribute('fill')).toBe(cssVar)
   })
 
   it('pattern tile size equals VB / TILE_COUNT (20)', () => {

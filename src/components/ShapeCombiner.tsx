@@ -74,11 +74,10 @@ export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }
     const clipId = `${uid}-clip`
     const patId = `${uid}-pat`
 
-    const tileColor = paramsB.fillColor
     const clipColor = paramsA.fillColor
 
     const clipBody = shapeA.svgBody({ ...paramsA, fillColor: 'white', strokeColor: 'white', strokeWidth: 0, opacity: 1 })
-    const tileBody = shapeB.svgBody({ ...paramsB, fillColor: 'currentColor', strokeColor: 'none', strokeWidth: 0 })
+    const tileBody = shapeB.svgBody({ ...paramsB, strokeColor: 'none', strokeWidth: 0 })
 
     const [, , vbAW, vbAH] = shapeA.viewBox.split(' ').map(Number)
     const [, , vbBW, vbBH] = shapeB.viewBox.split(' ').map(Number)
@@ -99,8 +98,6 @@ export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }
           <pattern id={patId} x="0" y="0" width={TILE} height={TILE} patternUnits="userSpaceOnUse">
             <rect width={TILE} height={TILE} fill={clipColor} opacity="0.25" />
             <g
-              color={tileColor}
-              fill="currentColor"
               transform={`scale(${tileScaleX} ${tileScaleY})`}
               dangerouslySetInnerHTML={{ __html: tileBody }}
             />
