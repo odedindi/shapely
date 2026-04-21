@@ -1,12 +1,13 @@
 import { createBrowserRouter, RouterProvider } from 'react-router'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LazyMotion, domAnimation } from 'framer-motion'
-import HomeScreen from '@/screens/HomeScreen'
-import GameScreen from '@/screens/GameScreen'
-import ShapeEditorScreen from '@/screens/ShapeEditorScreen'
-import SettingsScreen from '@/screens/SettingsScreen'
 import { useSettingsStore } from '@/store/settingsStore'
+
+const HomeScreen = lazy(() => import('@/screens/HomeScreen'))
+const GameScreen = lazy(() => import('@/screens/GameScreen'))
+const ShapeEditorScreen = lazy(() => import('@/screens/ShapeEditorScreen'))
+const SettingsScreen = lazy(() => import('@/screens/SettingsScreen'))
 
 const RTL_LANGUAGES = new Set(['he', 'ar'])
 
@@ -42,7 +43,9 @@ export default function App() {
   return (
     <LazyMotion features={domAnimation}>
       <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-content)] font-nunito">
-        <RouterProvider router={router} />
+        <Suspense fallback={null}>
+          <RouterProvider router={router} />
+        </Suspense>
       </div>
     </LazyMotion>
   )
