@@ -138,7 +138,7 @@ export default function SettingsPanel({ availableShapeCount = Infinity }: Settin
           {t('settings.combinationStyle', { defaultValue: 'Shape Style' })}
         </label>
         <div className="flex flex-wrap gap-2">
-          {(['overlay', 'silhouette', 'nested', 'side-by-side'] as CombinationStyle[]).map((style) => (
+          {(['overlay', 'silhouette', 'nested', 'side-by-side', 'fill'] as CombinationStyle[]).map((style) => (
             <button
               key={style}
               onClick={() => settings.updateSetting('combinationStyle', style)}
