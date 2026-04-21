@@ -1,12 +1,13 @@
 {
-  "name": "Shapely",
+  "name": "Shapely — Shape Matching Puzzle Game",
   "short_name": "Shapely",
-  "description": "Perceptual shape-matching educational game",
+  "description": "Train your visual-spatial perception by matching shape combinations on a dynamic grid. Free, offline-capable puzzle game.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#6366f1",
   "background_color": "#ffffff",
+  "categories": ["games", "education", "entertainment"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
