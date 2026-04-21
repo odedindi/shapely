@@ -9,7 +9,7 @@ export interface ShapeRenderParams {
   opacity: number
 }
 
-export type CombinationStyle = 'overlay' | 'silhouette' | 'nested' | 'side-by-side'
+export type CombinationStyle = 'overlay' | 'silhouette' | 'nested' | 'side-by-side' | 'fill'
 export type CellRevealMode = 'visible' | 'hidden' | 'peek'
 export type DarkMode = 'auto' | 'light' | 'dark'
 export type Theme = 'default' | 'sunset' | 'forest' | 'ocean' | 'candy' | 'monochrome'
