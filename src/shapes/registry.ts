@@ -14,6 +14,11 @@ import { heart } from './definitions/heart'
 import { parallelogram } from './definitions/parallelogram'
 import { trapezoid } from './definitions/trapezoid'
 import { oval } from './definitions/oval'
+import { lightning } from './definitions/lightning'
+import { cloud } from './definitions/cloud'
+import { moon } from './definitions/moon'
+import { fish } from './definitions/fish'
+import { leaf } from './definitions/leaf'
 
 export const BUILTIN_SHAPES: ShapeDefinition[] = [
   circle,
@@ -31,4 +36,9 @@ export const BUILTIN_SHAPES: ShapeDefinition[] = [
   parallelogram,
   trapezoid,
   oval,
+  lightning,
+  cloud,
+  moon,
+  fish,
+  leaf,
 ]
