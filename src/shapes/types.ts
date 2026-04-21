@@ -30,6 +30,7 @@ export interface CustomShapeRecord {
   id: string
   name: string
   svgContent: string
+  viewBox: string
   createdAt: number
   updatedAt: number
 }

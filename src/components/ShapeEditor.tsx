@@ -4,11 +4,12 @@ import { EditorView, basicSetup } from 'codemirror'
 import { xml } from '@codemirror/lang-xml'
 import { oneDark } from '@codemirror/theme-one-dark'
 import type { CustomShapeRecord } from '@/shapes/types'
+import { normalizeSvgContent } from '@/shapes/svgNormalize'
 import { log } from '@/lib/logger'
 
 interface ShapeEditorProps {
   record?: CustomShapeRecord
-  onSave: (name: string, svgContent: string) => Promise<void>
+  onSave: (name: string, svgBody: string, viewBox: string) => Promise<void>
   onCancel: () => void
 }
 
@@ -30,9 +31,9 @@ const DEFAULT_PARAMS: PreviewParams = {
   opacity: 1,
 }
 
-const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <circle cx="50" cy="50" r="40" fill="currentColor"/>
-</svg>`
+const PLACEHOLDER_SVG = `<circle cx="50" cy="50" r="40" fill="currentColor"/>`
+
+const PLACEHOLDER_VIEWBOX = '0 0 100 100'
 
 function sanitizeSvg(raw: string): string {
   return raw
@@ -202,15 +203,22 @@ function SliderRow({ label, value, min, max, step = 1, onChange, displayValue }:
 export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(record?.name ?? '')
-  const [svgCode, setSvgCode] = useState(record?.svgContent ?? PLACEHOLDER_SVG)
+  const [svgBody, setSvgBody] = useState(record?.svgContent ?? PLACEHOLDER_SVG)
+  const [detectedViewBox, setDetectedViewBox] = useState(record?.viewBox ?? PLACEHOLDER_VIEWBOX)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [params, setParams] = useState<PreviewParams>(DEFAULT_PARAMS)
 
-  const sanitized = sanitizeSvg(svgCode)
+  const sanitized = sanitizeSvg(svgBody)
 
   function setParam<K extends keyof PreviewParams>(key: K, value: PreviewParams[K]) {
     setParams((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleCodeChange(raw: string) {
+    const { viewBox, body } = normalizeSvgContent(sanitizeSvg(raw))
+    setDetectedViewBox(viewBox)
+    setSvgBody(body)
   }
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,7 +227,11 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
     const reader = new FileReader()
     reader.onload = (ev) => {
       const text = ev.target?.result
-      if (typeof text === 'string') setSvgCode(text)
+      if (typeof text === 'string') {
+        const { viewBox, body } = normalizeSvgContent(sanitizeSvg(text))
+        setDetectedViewBox(viewBox)
+        setSvgBody(body)
+      }
     }
     reader.onerror = () => {
       log.ui.error('FileReader failed to read SVG file', { fileName: file.name, size: file.size })
@@ -229,18 +241,18 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) { setError(t('editor.nameRequired')); return }
-    if (!svgCode.trim()) { setError(t('editor.svgRequired')); return }
+    if (!svgBody.trim()) { setError(t('editor.svgRequired')); return }
     setSaving(true)
     setError(null)
     try {
-      await onSave(name.trim(), sanitizeSvg(svgCode))
+      await onSave(name.trim(), svgBody, detectedViewBox)
     } catch (err) {
       log.ui.error('shape save failed', err)
       setError(t('editor.saveFailed'))
     } finally {
       setSaving(false)
     }
-  }, [name, svgCode, onSave, t])
+  }, [name, svgBody, detectedViewBox, onSave, t])
 
   const previewModes = [
     { mode: 'overlay' as const, label: t('settings.mode.overlay') },
@@ -277,10 +289,15 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
       </div>
 
       <div className="flex flex-col gap-1 min-h-0">
-        <label className="text-sm font-semibold text-[var(--color-content-muted)]">
-          {t('editor.svgCode')}
-        </label>
-        <SvgCodeEditor value={svgCode} onChange={setSvgCode} />
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-[var(--color-content-muted)]">
+            {t('editor.svgCode')}
+          </label>
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-[var(--color-surface-alt)] text-[var(--color-content-muted)] border border-[var(--color-border)]">
+            viewBox: {detectedViewBox}
+          </span>
+        </div>
+        <SvgCodeEditor value={svgBody} onChange={handleCodeChange} />
       </div>
 
       <div className="flex flex-col gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">

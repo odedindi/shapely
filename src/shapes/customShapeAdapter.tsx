@@ -1,10 +1,10 @@
 import type { ShapeDefinition, CustomShapeRecord, ShapeRenderParams } from '@/shapes/types'
 
 export function customShapeRecordToDefinition(record: CustomShapeRecord): ShapeDefinition {
-  const viewBox = '0 0 100 100'
+  const viewBox = record.viewBox
 
   const svgBody = (params: ShapeRenderParams) =>
-    sanitizeSvgContent(record.svgContent, params)
+    applyParams(record.svgContent, params)
 
   return {
     id: record.id,
@@ -25,9 +25,9 @@ export function customShapeRecordToDefinition(record: CustomShapeRecord): ShapeD
   }
 }
 
-function sanitizeSvgContent(svgContent: string, params: ShapeRenderParams): string {
+function applyParams(body: string, params: ShapeRenderParams): string {
   const parser = new DOMParser()
-  const doc = parser.parseFromString(`<svg>${svgContent}</svg>`, 'image/svg+xml')
+  const doc = parser.parseFromString(`<svg>${body}</svg>`, 'image/svg+xml')
   const elements = doc.querySelectorAll('*')
   elements.forEach((el) => {
     if (!el.hasAttribute('fill') || el.getAttribute('fill') === 'none') return
