@@ -26,11 +26,11 @@ export default function ShapeEditorScreen() {
     setTab('editor')
   }
 
-  async function handleSave(name: string, svgContent: string) {
+  async function handleSave(name: string, svgContent: string, viewBox: string) {
     if (editing) {
-      await updateCustomShape(editing.id, { name, svgContent })
+      await updateCustomShape(editing.id, { name, svgContent, viewBox })
     } else {
-      await addCustomShape(name, svgContent)
+      await addCustomShape(name, svgContent, viewBox)
     }
     setTab('library')
   }
@@ -105,8 +105,9 @@ export default function ShapeEditorScreen() {
                     key={record.id}
                     className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3 flex flex-col gap-2"
                   >
-                    <div
-                      className="w-full aspect-square flex items-center justify-center text-[var(--color-primary)] overflow-hidden"
+                    <svg
+                      viewBox={record.viewBox ?? '0 0 100 100'}
+                      className="w-full aspect-square text-[var(--color-primary)] overflow-hidden"
                       dangerouslySetInnerHTML={{ __html: record.svgContent }}
                     />
                     <p className="text-sm font-semibold text-[var(--color-content)] text-center truncate">

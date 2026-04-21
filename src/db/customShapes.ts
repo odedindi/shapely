@@ -10,9 +10,46 @@ const SEED_SHAPES: CustomShapeRecord[] = [
   {
     id: 'custom-1776712880869',
     name: 'blop',
-    svgContent: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">\n\n  <circle cx="25" cy="25" r="24" fill="var(--color-primary-fg)"/>\n  <circle cx="75" cy="25" r="24" fill="var(--color-primary-fg)"/>\n  <circle cx="25" cy="25" r="14" fill="currentColor"/>\n  <circle cx="75" cy="25" r="14" fill="currentColor"/>\n\n  <circle cx="50" cy="55" r="42" fill="var(--color-primary-fg)"/>\n  <circle cx="50" cy="50" r="40" fill="currentColor"/>\n\n  <circle cx="40" cy="40" r="10" fill="var(--color-content)"/>\n  <circle cx="41" cy="42" r="4" fill="var(--color-primary-fg)"/>\n\n  <circle cx="60" cy="40" r="10" fill="var(--color-content)"/>\n  <circle cx="59" cy="42" r="4" fill="var(--color-primary-fg)"/>\n\n</svg>',
+    viewBox: '0 0 100 100',
+    svgContent:
+      '<circle cx="25" cy="25" r="24" fill="currentColor" opacity="0.3"/>' +
+      '<circle cx="75" cy="25" r="24" fill="currentColor" opacity="0.3"/>' +
+      '<circle cx="50" cy="55" r="42" fill="currentColor" opacity="0.15"/>' +
+      '<circle cx="50" cy="50" r="40" fill="currentColor"/>' +
+      '<circle cx="40" cy="40" r="10" fill="white" opacity="0.7"/>' +
+      '<circle cx="41" cy="42" r="4" fill="currentColor" opacity="0.6"/>' +
+      '<circle cx="60" cy="40" r="10" fill="white" opacity="0.7"/>' +
+      '<circle cx="59" cy="42" r="4" fill="currentColor" opacity="0.6"/>',
     createdAt: 1776712880869,
     updatedAt: 1776712880869,
+  },
+  {
+    id: 'custom-seed-arrow',
+    name: 'arrow',
+    viewBox: '0 0 100 100',
+    svgContent:
+      '<polygon points="50,10 90,60 65,60 65,90 35,90 35,60 10,60" fill="currentColor"/>',
+    createdAt: 1776712880870,
+    updatedAt: 1776712880870,
+  },
+  {
+    id: 'custom-seed-cross',
+    name: 'cross',
+    viewBox: '0 0 100 100',
+    svgContent:
+      '<rect x="38" y="5" width="24" height="90" rx="4" fill="currentColor"/>' +
+      '<rect x="5" y="38" width="90" height="24" rx="4" fill="currentColor"/>',
+    createdAt: 1776712880871,
+    updatedAt: 1776712880871,
+  },
+  {
+    id: 'custom-seed-moon',
+    name: 'moon',
+    viewBox: '0 0 100 100',
+    svgContent:
+      '<path d="M70,15 A40,40 0 1,0 70,85 A28,28 0 1,1 70,15 Z" fill="currentColor"/>',
+    createdAt: 1776712880872,
+    updatedAt: 1776712880872,
   },
 ]
 
