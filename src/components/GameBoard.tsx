@@ -12,6 +12,7 @@ interface GameBoardProps {
   phase: GamePhase
   hintQuadrant?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | null
   solvedCells?: Set<string>
+  isDragging?: boolean
 }
 
 const headerParams = (colorIndex: number): ShapeRenderParams => ({
@@ -24,7 +25,7 @@ const headerParams = (colorIndex: number): ShapeRenderParams => ({
 
 export default function GameBoard({
   board, currentCard, combinationStyle, cellRevealMode,
-  selectedCell, onCellSelect, phase, hintQuadrant, solvedCells
+  selectedCell, onCellSelect, phase, hintQuadrant, solvedCells, isDragging
 }: GameBoardProps) {
   const { gridSize, columnShapes, rowShapes } = board
   const mid = gridSize / 2
@@ -82,6 +83,7 @@ export default function GameBoard({
                   isSelected={isSelected}
                   isHintTarget={isHintTarget}
                   isSolved={solvedCells?.has(`${col}-${row}`)}
+                  isDragging={isDragging}
                   phase={phase}
                   col={col}
                   row={row}

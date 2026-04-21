@@ -217,6 +217,7 @@ export default function GameScreen() {
                   phase={store.phase}
                   hintQuadrant={hintQuadrant}
                   solvedCells={store.solvedCells}
+                  isDragging={isDragging}
                 />
             )}
           </div>

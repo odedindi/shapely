@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { m } from 'framer-motion'
 import { useDroppable } from '@dnd-kit/core'
 import type { ShapeDefinition, CombinationStyle, CellRevealMode, GamePhase, ShapeRenderParams } from '@/shapes/types'
@@ -12,6 +13,7 @@ interface BoardCellProps {
   isCorrect: boolean
   isSelected: boolean
   isHintTarget?: boolean
+  isDragging?: boolean
   phase: GamePhase
   col: number
   row: number
@@ -19,9 +21,9 @@ interface BoardCellProps {
   onSelect: (col: number, row: number) => void
 }
 
-export default function BoardCell({
+const BoardCell = memo(function BoardCell({
   columnShape, rowShape, combinationStyle, revealMode,
-  isCorrect, isSelected, isHintTarget, phase, col, row, isSolved, onSelect,
+  isCorrect, isSelected, isHintTarget, isDragging, phase, col, row, isSolved, onSelect,
 }: BoardCellProps) {
   const droppableId = `cell-${col}-${row}`
   const { setNodeRef, isOver } = useDroppable({ id: droppableId })
@@ -29,21 +31,21 @@ export default function BoardCell({
   const colorIdx = (col % 8) + 1
   const colorIdxB = ((row + 4) % 8) + 1
 
-  const paramsA: ShapeRenderParams = {
+  const paramsA = useMemo<ShapeRenderParams>(() => ({
     fillColor: `var(--shape-color-${colorIdx})`,
     strokeColor: 'var(--color-content-muted)',
     strokeWidth: 2,
     rotation: 0,
     opacity: 0.9,
-  }
+  }), [colorIdx])
 
-  const paramsB: ShapeRenderParams = {
+  const paramsB = useMemo<ShapeRenderParams>(() => ({
     fillColor: `var(--shape-color-${colorIdxB})`,
     strokeColor: 'var(--color-content-muted)',
     strokeWidth: 1.5,
     rotation: 0,
     opacity: 0.82,
-  }
+  }), [colorIdxB])
 
   const isHidden = revealMode === 'hidden' && !isSolved
   const isPeek = revealMode === 'peek' && !isSolved
@@ -86,7 +88,7 @@ export default function BoardCell({
           ? '0 8px 24px color-mix(in srgb, var(--color-primary) 30%, transparent)'
           : '0 1px 3px rgba(0,0,0,0.04)',
       }}
-      whileHover={{ scale: 1.06, y: -2 }}
+      whileHover={isDragging ? undefined : { scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.96 }}
       transition={{
         opacity: { delay: (col + row) * 0.025, duration: 0.2 },
@@ -167,4 +169,6 @@ export default function BoardCell({
       )}
     </m.div>
   )
-}
+})
+
+export default BoardCell
