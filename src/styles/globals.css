@@ -507,5 +507,6 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-inline-start: env(safe-area-inset-left);
   padding-inline-end: env(safe-area-inset-right);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }

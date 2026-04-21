@@ -35,3 +35,54 @@ export function dealCard(board: BoardState): CardState {
     correctCell: { col, row },
   }
 }
+
+export function dealUniqueCard(board: BoardState, solvedCells: Set<string>): CardState | null {
+  const unsolved: Array<{ col: number; row: number }> = []
+  for (let col = 0; col < board.gridSize; col++) {
+    for (let row = 0; row < board.gridSize; row++) {
+      if (!solvedCells.has(`${col}-${row}`)) {
+        unsolved.push({ col, row })
+      }
+    }
+  }
+  if (unsolved.length === 0) return null
+  const pick = unsolved[Math.floor(Math.random() * unsolved.length)]
+  return {
+    columnShape: board.columnShapes[pick.col],
+    rowShape: board.rowShapes[pick.row],
+    correctCell: { col: pick.col, row: pick.row },
+  }
+}
+
+export function dealWeightedCard(board: BoardState, solvedCells: Set<string>): CardState {
+  const UNSOLVED_WEIGHT = 10
+  const SOLVED_WEIGHT = 1
+
+  const candidates: Array<{ col: number; row: number; weight: number }> = []
+  for (let col = 0; col < board.gridSize; col++) {
+    for (let row = 0; row < board.gridSize; row++) {
+      const weight = solvedCells.has(`${col}-${row}`) ? SOLVED_WEIGHT : UNSOLVED_WEIGHT
+      candidates.push({ col, row, weight })
+    }
+  }
+
+  const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0)
+  let rand = Math.random() * totalWeight
+  for (const candidate of candidates) {
+    rand -= candidate.weight
+    if (rand <= 0) {
+      return {
+        columnShape: board.columnShapes[candidate.col],
+        rowShape: board.rowShapes[candidate.row],
+        correctCell: { col: candidate.col, row: candidate.row },
+      }
+    }
+  }
+  // Fallback to last candidate (floating-point safety)
+  const last = candidates[candidates.length - 1]
+  return {
+    columnShape: board.columnShapes[last.col],
+    rowShape: board.rowShapes[last.row],
+    correctCell: { col: last.col, row: last.row },
+  }
+}

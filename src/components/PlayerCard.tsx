@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { m } from 'framer-motion'
 import { useDraggable } from '@dnd-kit/core'
@@ -23,21 +22,24 @@ export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost 
     disabled: isGhost || phase !== 'playing',
   })
 
-  const paramsA = useMemo<ShapeRenderParams>(() => {
-    const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim() || '#e5e7eb'
-    return {
-      fillColor: getComputedStyle(document.documentElement).getPropertyValue('--shape-color-1').trim(),
-      strokeColor: borderColor,
-      strokeWidth: 2,
-      rotation: 0,
-      opacity: 1,
-    }
-  }, [])
+  const colIdx = (card.correctCell.col % 8) + 1
+  const rowIdx = ((card.correctCell.row + 4) % 8) + 1
 
-  const paramsB = useMemo<ShapeRenderParams>(() => ({
-    ...paramsA,
-    fillColor: getComputedStyle(document.documentElement).getPropertyValue('--shape-color-5').trim(),
-  }), [paramsA])
+  const paramsA: ShapeRenderParams = {
+    fillColor: `var(--shape-color-${colIdx})`,
+    strokeColor: 'var(--color-border)',
+    strokeWidth: 2,
+    rotation: 0,
+    opacity: 1,
+  }
+
+  const paramsB: ShapeRenderParams = {
+    fillColor: `var(--shape-color-${rowIdx})`,
+    strokeColor: 'var(--color-border)',
+    strokeWidth: 2,
+    rotation: 0,
+    opacity: 1,
+  }
 
   const shakeAnimate = phase === 'wrong' ? { x: [0, -9, 9, -9, 9, -5, 5, 0] } : {}
   const correctAnimate = phase === 'correct' ? { scale: [1, 1.13, 0.97, 1.04, 1] } : {}
@@ -128,14 +130,14 @@ export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost 
       <div className="px-2 py-1.5 border-t border-[var(--color-border)] bg-[var(--color-surface-alt)] flex items-center justify-center gap-1.5 flex-wrap">
         <span
           className="text-[9px] font-bold px-1.5 py-0.5 rounded-full truncate max-w-[5rem]"
-          style={{ background: 'color-mix(in srgb, var(--shape-color-1) 18%, transparent)', color: 'var(--shape-color-1)' }}
+          style={{ background: `color-mix(in srgb, var(--shape-color-${colIdx}) 18%, transparent)`, color: `var(--shape-color-${colIdx})` }}
         >
           {card.columnShape.name}
         </span>
         <span className="text-[9px] text-[var(--color-content-muted)]">·</span>
         <span
           className="text-[9px] font-bold px-1.5 py-0.5 rounded-full truncate max-w-[5rem]"
-          style={{ background: 'color-mix(in srgb, var(--shape-color-5) 18%, transparent)', color: 'var(--shape-color-5)' }}
+          style={{ background: `color-mix(in srgb, var(--shape-color-${rowIdx}) 18%, transparent)`, color: `var(--shape-color-${rowIdx})` }}
         >
           {card.rowShape.name}
         </span>

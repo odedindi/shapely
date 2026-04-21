@@ -15,6 +15,7 @@ export type DarkMode = 'auto' | 'light' | 'dark'
 export type Theme = 'default' | 'sunset' | 'forest' | 'ocean' | 'candy' | 'monochrome'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type GamePhase = 'idle' | 'playing' | 'correct' | 'wrong' | 'complete'
+export type GameMode = 'unique' | 'weighted'
 
 export interface ShapeDefinition {
   id: string

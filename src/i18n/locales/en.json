@@ -17,6 +17,17 @@
   "game.correct": "Correct!",
   "game.wrong": "Try again",
   "game.complete": "Well done!",
+  "game.levelUp": "Level Up!",
+  "game.levelUpSubtitle": "Game is getting harder!",
+
+  "victory.title": "Well done!",
+  "victory.score": "Score",
+  "victory.time": "Time",
+  "victory.accuracy": "Accuracy",
+  "victory.bestStreak": "Best Streak",
+  "victory.share": "Share Result",
+  "victory.playAgain": "Play Again",
+  "victory.home": "Home",
 
   "settings.title": "Settings",
   "settings.theme": "Theme",
@@ -57,5 +68,12 @@
   "editor.loading": "Loading…",
   "editor.nameRequired": "Name is required",
   "editor.svgRequired": "SVG content is required",
-  "editor.saveFailed": "Failed to save shape"
+  "editor.saveFailed": "Failed to save shape",
+  "editor.size": "Size",
+  "editor.strokeWidth": "Stroke Width",
+  "editor.rotation": "Rotation",
+  "editor.fillColor": "Fill Color",
+  "editor.strokeColor": "Stroke Color",
+  "editor.opacity": "Opacity",
+  "editor.preview4": "Preview Modes"
 }

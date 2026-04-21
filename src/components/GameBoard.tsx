@@ -9,16 +9,13 @@ interface GameBoardProps {
   selectedCell: { col: number; row: number } | null
   onCellSelect: (col: number, row: number) => void
   phase: GamePhase
-}
-
-function getShapeColor(index: number): string {
-  const clamped = Math.min(Math.max(index, 1), 8)
-  return getComputedStyle(document.documentElement).getPropertyValue(`--shape-color-${clamped}`).trim()
+  hintQuadrant?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | null
+  solvedCells?: Set<string>
 }
 
 const headerParams = (colorIndex: number): ShapeRenderParams => ({
-  fillColor: getShapeColor(colorIndex),
-  strokeColor: getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim() || '#e5e7eb',
+  fillColor: `var(--shape-color-${((colorIndex - 1) % 8) + 1})`,
+  strokeColor: 'var(--color-border)',
   strokeWidth: 2,
   rotation: 0,
   opacity: 1,
@@ -26,9 +23,10 @@ const headerParams = (colorIndex: number): ShapeRenderParams => ({
 
 export default function GameBoard({
   board, currentCard, combinationStyle, cellRevealMode,
-  selectedCell, onCellSelect, phase,
+  selectedCell, onCellSelect, phase, hintQuadrant, solvedCells
 }: GameBoardProps) {
   const { gridSize, columnShapes, rowShapes } = board
+  const mid = gridSize / 2
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2 md:p-4">
@@ -63,6 +61,15 @@ export default function GameBoard({
                 currentCard?.correctCell.col === col && currentCard?.correctCell.row === row
               const isSelected =
                 selectedCell?.col === col && selectedCell?.row === row
+                
+              let isHintTarget = false
+              if (hintQuadrant && !isCorrect) {
+                if (hintQuadrant === 'topLeft' && col < mid && row < mid) isHintTarget = true
+                if (hintQuadrant === 'topRight' && col >= mid && row < mid) isHintTarget = true
+                if (hintQuadrant === 'bottomLeft' && col < mid && row >= mid) isHintTarget = true
+                if (hintQuadrant === 'bottomRight' && col >= mid && row >= mid) isHintTarget = true
+              }
+
               return (
                 <BoardCell
                   key={`${col}-${row}`}
@@ -72,6 +79,8 @@ export default function GameBoard({
                   revealMode={cellRevealMode}
                   isCorrect={isCorrect}
                   isSelected={isSelected}
+                  isHintTarget={isHintTarget}
+                  isSolved={solvedCells?.has(`${col}-${row}`)}
                   phase={phase}
                   col={col}
                   row={row}

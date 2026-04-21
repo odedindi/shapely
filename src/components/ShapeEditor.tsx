@@ -12,6 +12,24 @@ interface ShapeEditorProps {
   onCancel: () => void
 }
 
+interface PreviewParams {
+  size: number
+  strokeWidth: number
+  rotation: number
+  fillColor: string
+  strokeColor: string
+  opacity: number
+}
+
+const DEFAULT_PARAMS: PreviewParams = {
+  size: 60,
+  strokeWidth: 2,
+  rotation: 0,
+  fillColor: '#6366f1',
+  strokeColor: 'none',
+  opacity: 1,
+}
+
 const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <circle cx="50" cy="50" r="40" fill="currentColor"/>
 </svg>`
@@ -77,14 +95,123 @@ function SvgCodeEditor({ value, onChange }: { value: string; onChange: (v: strin
   )
 }
 
+interface PreviewTileProps {
+  sanitized: string
+  params: PreviewParams
+  label: string
+  mode: 'overlay' | 'silhouette' | 'nested' | 'side-by-side'
+}
+
+function PreviewTile({ sanitized, params, label, mode }: PreviewTileProps) {
+  const { fillColor, strokeColor, rotation, opacity } = params
+
+  function layer(color: string, rotateDeg: number, layerOpacity: number, extraClass = '') {
+    return (
+      <div
+        className={`absolute inset-0 flex items-center justify-center ${extraClass}`}
+        style={{ color, transform: `rotate(${rotateDeg}deg)`, opacity: layerOpacity }}
+        dangerouslySetInnerHTML={{ __html: sanitized }}
+      />
+    )
+  }
+
+  let content: React.ReactNode
+
+  if (mode === 'overlay') {
+    content = (
+      <div className="relative w-full h-full">
+        {layer(fillColor, rotation, opacity)}
+        {layer(strokeColor, rotation + 30, opacity * 0.5)}
+      </div>
+    )
+  } else if (mode === 'silhouette') {
+    content = (
+      <div className="relative w-full h-full">
+        {layer('var(--color-content)', rotation, 0.5)}
+        {layer('var(--color-content)', rotation + 20, 0.5)}
+      </div>
+    )
+  } else if (mode === 'nested') {
+    content = (
+      <div className="relative w-full h-full">
+        {layer(fillColor, rotation, opacity)}
+        <div
+          className="absolute inset-[22%] flex items-center justify-center"
+          style={{ color: strokeColor, transform: `rotate(${rotation}deg)`, opacity: opacity * 0.8 }}
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
+      </div>
+    )
+  } else {
+    content = (
+      <div className="w-full h-full flex items-center justify-center gap-[4%]">
+        <div
+          className="w-[46%] aspect-square"
+          style={{ color: fillColor, transform: `rotate(${rotation}deg)`, opacity }}
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
+        <div
+          className="w-[46%] aspect-square"
+          style={{ color: strokeColor, transform: `rotate(${rotation}deg)`, opacity }}
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="w-full aspect-square rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-hidden p-2">
+        {content}
+      </div>
+      <span className="text-xs text-[var(--color-content-muted)]">{label}</span>
+    </div>
+  )
+}
+
+interface SliderRowProps {
+  label: string
+  value: number
+  min: number
+  max: number
+  step?: number
+  onChange: (v: number) => void
+  displayValue?: string
+}
+
+function SliderRow({ label, value, min, max, step = 1, onChange, displayValue }: SliderRowProps) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-[var(--color-content-muted)]">{label}</span>
+        <span className="text-xs text-[var(--color-content-muted)] tabular-nums">{displayValue ?? value}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-[var(--color-primary)] h-1.5 rounded-full"
+      />
+    </div>
+  )
+}
+
 export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(record?.name ?? '')
   const [svgCode, setSvgCode] = useState(record?.svgContent ?? PLACEHOLDER_SVG)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [params, setParams] = useState<PreviewParams>(DEFAULT_PARAMS)
 
   const sanitized = sanitizeSvg(svgCode)
+
+  function setParam<K extends keyof PreviewParams>(key: K, value: PreviewParams[K]) {
+    setParams((prev) => ({ ...prev, [key]: value }))
+  }
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -115,6 +242,13 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
     }
   }, [name, svgCode, onSave, t])
 
+  const previewModes = [
+    { mode: 'overlay' as const, label: t('settings.mode.overlay') },
+    { mode: 'silhouette' as const, label: t('settings.mode.silhouette') },
+    { mode: 'nested' as const, label: t('settings.mode.nested') },
+    { mode: 'side-by-side' as const, label: t('settings.mode.sideBySide') },
+  ]
+
   return (
     <div className="flex flex-col gap-4 p-4" dir="ltr">
       <div className="flex flex-col gap-1">
@@ -142,24 +276,86 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 flex flex-col gap-1 min-h-0">
-          <label className="text-sm font-semibold text-[var(--color-content-muted)]">
-            {t('editor.svgCode')}
-          </label>
-          <SvgCodeEditor value={svgCode} onChange={setSvgCode} />
-        </div>
+      <div className="flex flex-col gap-1 min-h-0">
+        <label className="text-sm font-semibold text-[var(--color-content-muted)]">
+          {t('editor.svgCode')}
+        </label>
+        <SvgCodeEditor value={svgCode} onChange={setSvgCode} />
+      </div>
 
-        <div className="flex flex-col gap-1 md:w-48 shrink-0">
-          <label className="text-sm font-semibold text-[var(--color-content-muted)]">
-            {t('editor.preview')}
-          </label>
-          <div className="w-full md:w-48 aspect-square rounded-xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-surface-raised)] flex items-center justify-center overflow-hidden p-3">
-            <div
-              className="w-full h-full flex items-center justify-center text-[var(--color-primary)]"
-              dangerouslySetInnerHTML={{ __html: sanitized }}
+      <div className="flex flex-col gap-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-alt)]">
+        <SliderRow
+          label={t('editor.size')}
+          value={params.size}
+          min={20}
+          max={100}
+          onChange={(v) => setParam('size', v)}
+        />
+        <SliderRow
+          label={t('editor.strokeWidth')}
+          value={params.strokeWidth}
+          min={0}
+          max={10}
+          onChange={(v) => setParam('strokeWidth', v)}
+        />
+        <SliderRow
+          label={t('editor.rotation')}
+          value={params.rotation}
+          min={0}
+          max={360}
+          onChange={(v) => setParam('rotation', v)}
+          displayValue={`${params.rotation}°`}
+        />
+        <SliderRow
+          label={t('editor.opacity')}
+          value={params.opacity}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => setParam('opacity', v)}
+          displayValue={`${Math.round(params.opacity * 100)}%`}
+        />
+
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--color-content-muted)]">
+              {t('editor.fillColor')}
+            </span>
+            <input
+              type="color"
+              value={params.fillColor}
+              onChange={(e) => setParam('fillColor', e.target.value)}
+              className="w-9 h-9 rounded-lg border border-[var(--color-border)] cursor-pointer bg-transparent p-0.5"
             />
           </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-[var(--color-content-muted)]">
+              {t('editor.strokeColor')}
+            </span>
+            <input
+              type="color"
+              value={params.strokeColor === 'none' ? '#000000' : params.strokeColor}
+              onChange={(e) => setParam('strokeColor', e.target.value)}
+              className="w-9 h-9 rounded-lg border border-[var(--color-border)] cursor-pointer bg-transparent p-0.5"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-semibold text-[var(--color-content-muted)]">
+          {t('editor.preview4')}
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          {previewModes.map(({ mode, label }) => (
+            <PreviewTile
+              key={mode}
+              sanitized={sanitized}
+              params={params}
+              label={label}
+              mode={mode}
+            />
+          ))}
         </div>
       </div>
 

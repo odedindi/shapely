@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { m } from 'framer-motion'
 import { useDroppable } from '@dnd-kit/core'
 import type { ShapeDefinition, CombinationStyle, CellRevealMode, GamePhase, ShapeRenderParams } from '@/shapes/types'
@@ -12,34 +11,42 @@ interface BoardCellProps {
   revealMode: CellRevealMode
   isCorrect: boolean
   isSelected: boolean
+  isHintTarget?: boolean
   phase: GamePhase
   col: number
   row: number
+  isSolved?: boolean
   onSelect: (col: number, row: number) => void
 }
 
 export default function BoardCell({
   columnShape, rowShape, combinationStyle, revealMode,
-  isCorrect, isSelected, phase, col, row, onSelect,
+  isCorrect, isSelected, isHintTarget, phase, col, row, isSolved, onSelect,
 }: BoardCellProps) {
   const droppableId = `cell-${col}-${row}`
   const { setNodeRef, isOver } = useDroppable({ id: droppableId })
 
-  const paramsA = useMemo<ShapeRenderParams>(() => ({
-    fillColor: getComputedStyle(document.documentElement).getPropertyValue(`--shape-color-${Math.min(Math.max(col + 1, 1), 8)}`).trim(),
-    strokeColor: getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim() || '#e5e7eb',
+  const colorIdx = (col % 8) + 1
+  const colorIdxB = ((row + 4) % 8) + 1
+
+  const paramsA: ShapeRenderParams = {
+    fillColor: `var(--shape-color-${colorIdx})`,
+    strokeColor: 'var(--color-content-muted)',
     strokeWidth: 2,
     rotation: 0,
     opacity: 0.9,
-  }), [col])
+  }
 
-  const paramsB = useMemo<ShapeRenderParams>(() => ({
-    ...paramsA,
-    fillColor: getComputedStyle(document.documentElement).getPropertyValue(`--shape-color-${Math.min(Math.max(row + 5, 1), 8)}`).trim(),
-  }), [row, paramsA])
+  const paramsB: ShapeRenderParams = {
+    fillColor: `var(--shape-color-${colorIdxB})`,
+    strokeColor: 'var(--color-content-muted)',
+    strokeWidth: 1.5,
+    rotation: 0,
+    opacity: 0.82,
+  }
 
-  const isHidden = revealMode === 'hidden'
-  const isPeek = revealMode === 'peek'
+  const isHidden = revealMode === 'hidden' && !isSolved
+  const isPeek = revealMode === 'peek' && !isSolved
   const showCorrectRing = isCorrect && phase === 'correct'
   const showWrongFlash = phase === 'wrong' && isSelected
 
@@ -47,24 +54,27 @@ export default function BoardCell({
     'border-2',
     showCorrectRing
       ? 'border-[var(--color-success)]'
-      : isSelected
-        ? 'border-[var(--color-primary)]'
-        : isOver
-          ? 'border-[var(--color-primary)] border-dashed'
-          : 'border-[var(--color-border)]',
+      : isSolved
+        ? 'border-[color-mix(in_srgb,var(--color-success)_60%,transparent)]'
+        : isSelected
+          ? 'border-[var(--color-primary)]'
+          : isOver
+            ? 'border-[var(--color-primary)] border-dashed'
+            : 'border-[var(--color-border)]',
   )
 
   return (
     <m.div
       ref={setNodeRef}
       role="button"
-      tabIndex={0}
+      tabIndex={isSolved ? -1 : 0}
       aria-pressed={isSelected}
       className={cn(
         'relative w-full aspect-square rounded-xl flex items-center justify-center cursor-pointer overflow-hidden',
         'bg-[var(--color-surface-raised)]',
         'transition-colors duration-150',
         'self-center justify-self-center-safe',
+        isSolved && 'pointer-events-none',
         borderClass,
       )}
       initial={{ opacity: 0, scale: 0.85 }}
@@ -78,7 +88,14 @@ export default function BoardCell({
       }}
       whileHover={{ scale: 1.06, y: -2 }}
       whileTap={{ scale: 0.96 }}
-      transition={{ delay: (col + row) * 0.025, type: 'spring', stiffness: 320, damping: 22 }}
+      transition={{
+        opacity: { delay: (col + row) * 0.025, duration: 0.2 },
+        scale: isOver
+          ? { type: 'spring', stiffness: 600, damping: 28 }
+          : { type: 'spring', stiffness: 400, damping: 26, delay: (col + row) * 0.025 },
+        y: { type: 'spring', stiffness: 600, damping: 28 },
+        boxShadow: { duration: 0.12, ease: 'easeOut' },
+      }}
       onPointerUp={() => onSelect(col, row)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(col, row) }}
     >
@@ -95,7 +112,7 @@ export default function BoardCell({
           <span className="text-2xl text-[var(--color-content-muted)] select-none">?</span>
         </div>
       ) : (
-        <div className={cn('w-full h-full p-[8%]', isPeek && 'blur-sm hover:blur-none focus:blur-none transition-[filter] duration-300')}>
+        <div className={cn('w-full h-full p-[8%]', isPeek && !isOver && 'blur-sm hover:blur-none focus:blur-none transition-[filter] duration-300', isPeek && isOver && 'transition-[filter] duration-150')}>
           <ShapeCombiner
             shapeA={columnShape}
             shapeB={rowShape}
@@ -104,6 +121,23 @@ export default function BoardCell({
             mode={combinationStyle}
           />
         </div>
+      )}
+
+      {isHintTarget && (
+        <m.div
+          key="hint-flash"
+          className="pointer-events-none absolute inset-0 rounded-xl"
+          style={{ background: 'color-mix(in srgb, var(--color-warning) 40%, transparent)' }}
+          animate={{ opacity: [0, 0.35, 0, 0.25, 0] }}
+          transition={{ duration: 1.2, ease: 'easeInOut' }}
+        />
+      )}
+
+      {isSolved && (
+        <>
+          <div className="pointer-events-none absolute inset-0 rounded-xl" style={{ background: 'color-mix(in srgb, var(--color-success) 6%, transparent)' }} />
+          <span className="absolute top-1 end-1 text-[10px] text-[var(--color-success)] opacity-60 select-none">✓</span>
+        </>
       )}
 
       {showCorrectRing && (

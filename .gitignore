@@ -12,3 +12,5 @@ build/
 
 # Dev logs
 logs/
+
+.playwright-mcp

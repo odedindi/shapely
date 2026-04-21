@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
-import { m } from 'framer-motion'
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
+import { m, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useShapeRegistry } from '@/hooks/useShapeRegistry'
@@ -12,7 +12,9 @@ import GameBoard from '@/components/GameBoard'
 import PlayerCard from '@/components/PlayerCard'
 import ScoreBar from '@/components/ScoreBar'
 import SettingsPanel from '@/components/SettingsPanel'
-import { Button } from '@/components/ui/button'
+import LevelUpOverlay from '@/components/LevelUpOverlay'
+import VictoryScreen from '@/screens/VictoryScreen'
+import { Sparkles } from '@/components/magic/Sparkles'
 import { log } from '@/lib/logger'
 
 export default function GameScreen() {
@@ -25,6 +27,14 @@ export default function GameScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [cardSelected, setCardSelected] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [activeCellId, setActiveCellId] = useState<string | null>(null)
+  const [showLevelUp, setShowLevelUp] = useState(false)
+  const [sparklesPos, setSparklesPos] = useState<{ x: number; y: number } | null>(null)
+  const [hintQuadrant, setHintQuadrant] = useState<'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | null>(null)
+  const [victoryStats, setVictoryStats] = useState<{ isNewRecord: boolean; previousBest: number } | null>(null)
+  const prevStreakRef = useRef(0)
+  const prevLevelUpPulseRef = useRef(0)
+  const cardAreaRef = useRef<HTMLDivElement>(null)
 
   const { startNewGame, submitAnswer } = useGameLogic(allShapes)
 
@@ -42,13 +52,66 @@ export default function GameScreen() {
     }
   }, [allShapes.length, store.phase, startNewGame])
 
+  useEffect(() => {
+    if (store.levelUpPulse > 0 && store.levelUpPulse !== prevLevelUpPulseRef.current) {
+      prevLevelUpPulseRef.current = store.levelUpPulse
+      setShowLevelUp(true)
+      const timer = setTimeout(() => setShowLevelUp(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [store.levelUpPulse])
+
+  useEffect(() => {
+    const current = store.streak
+    const prev = prevStreakRef.current
+    prevStreakRef.current = current
+    if (current > 0 && current % 3 === 0 && current !== prev) {
+      log.game.info('streak milestone sparkles', { streak: current })
+      if (cardAreaRef.current) {
+        const rect = cardAreaRef.current.getBoundingClientRect()
+        setSparklesPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+        setTimeout(() => setSparklesPos(null), 700)
+      }
+    }
+  }, [store.streak])
+
+  useEffect(() => {
+    if (store.phase === 'complete') {
+      if (!victoryStats) {
+        const bestKey = `${settings.gridSize}-${store.gameMode}`
+        const prevBest = settings.bestScores[bestKey] ?? 0
+        const isNewRecord = store.score > prevBest
+        setVictoryStats({ isNewRecord, previousBest: prevBest })
+        settings.updateBestScore(bestKey, store.score)
+      }
+    } else {
+      setVictoryStats(null)
+    }
+  }, [store.phase, store.score, store.gameMode, settings.gridSize, settings.bestScores, settings.updateBestScore, victoryStats])
+
   function handleDragStart(_event: DragStartEvent) {
     setIsDragging(true)
     setCardSelected(false)
+    setActiveCellId(null)
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    setActiveCellId(event.over?.id as string | null ?? null)
+  }
+
+  function computeHintQuadrant(correctCol: number, correctRow: number) {
+    if (!store.board) return null
+    const mid = store.board.gridSize / 2
+    if (correctCol < mid && correctRow < mid) return 'topLeft'
+    if (correctCol >= mid && correctRow < mid) return 'topRight'
+    if (correctCol < mid && correctRow >= mid) return 'bottomLeft'
+    if (correctCol >= mid && correctRow >= mid) return 'bottomRight'
+    return 'center'
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false)
+    setActiveCellId(null)
     const overId = event.over?.id
     if (typeof overId === 'string' && overId.startsWith('cell-')) {
       const parts = overId.split('-')
@@ -57,6 +120,14 @@ export default function GameScreen() {
       if (!isNaN(col) && !isNaN(row)) {
         submitAnswer(col, row)
         setSelectedCell({ col, row })
+        
+        const currentCard = store.currentCard
+        if (currentCard && (currentCard.correctCell.col !== col || currentCard.correctCell.row !== row)) {
+          const quad = computeHintQuadrant(currentCard.correctCell.col, currentCard.correctCell.row)
+          setHintQuadrant(quad)
+          setTimeout(() => setHintQuadrant(null), 1200)
+        }
+        
         setTimeout(() => setSelectedCell(null), 900)
       }
     }
@@ -66,6 +137,14 @@ export default function GameScreen() {
     if (store.phase !== 'playing') return
     setSelectedCell({ col, row })
     submitAnswer(col, row)
+    
+    const currentCard = store.currentCard
+    if (currentCard && (currentCard.correctCell.col !== col || currentCard.correctCell.row !== row)) {
+      const quad = computeHintQuadrant(currentCard.correctCell.col, currentCard.correctCell.row)
+      setHintQuadrant(quad)
+      setTimeout(() => setHintQuadrant(null), 1200)
+    }
+    
     setCardSelected(false)
     setTimeout(() => setSelectedCell(null), 900)
   }
@@ -95,42 +174,26 @@ export default function GameScreen() {
   }
 
   if (store.phase === 'complete') {
+    const accuracy =
+      store.totalAnswers > 0 ? (store.correctAnswers / store.totalAnswers) * 100 : 0
     return (
-      <div className="h-screen flex flex-col bg-[var(--color-surface)]">
-        <header className="h-14 flex items-center gap-3 px-4 border-b border-[var(--color-border)] bg-[var(--color-surface-alt)] shrink-0">
-          <button
-            aria-label={t('nav.back')}
-            onClick={() => navigate('/')}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--color-surface)] transition-colors text-[var(--color-content-muted)]"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <h1 className="font-bold text-lg text-[var(--color-content)]">Shapely</h1>
-        </header>
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4">
-          <div className="text-center">
-            <p className="text-5xl mb-2">🎉</p>
-            <p className="text-2xl font-bold text-[var(--color-content)]">
-              {t('game.score', { defaultValue: 'Score' })}: {store.score}
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 w-full max-w-xs">
-            <Button onClick={startNewGame} size="lg" className="w-full">
-              {t('game.playAgain', { defaultValue: 'Play Again' })}
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/')} className="w-full">
-              {t('nav.home', { defaultValue: 'Home' })}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <VictoryScreen
+        score={store.score}
+        timeElapsed={store.timeElapsed}
+        streak={store.bestStreak}
+        accuracy={accuracy}
+        isNewRecord={victoryStats?.isNewRecord ?? false}
+        previousBest={victoryStats?.previousBest ?? 0}
+        gridSize={settings.gridSize}
+        gameMode={store.gameMode}
+        onPlayAgain={startNewGame}
+        onHome={() => navigate('/')}
+      />
     )
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
       <div className="h-screen flex flex-col bg-[var(--color-surface)] overflow-hidden">
         <ScoreBar
           score={store.score}
@@ -144,15 +207,17 @@ export default function GameScreen() {
         <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
           <div className="flex-1 min-h-0 overflow-auto flex items-center justify-center">
             {store.board && (
-              <GameBoard
-                board={store.board}
-                currentCard={store.currentCard}
-                combinationStyle={settings.combinationStyle}
-                cellRevealMode={settings.cellRevealMode}
-                selectedCell={selectedCell}
-                onCellSelect={handleCellSelect}
-                phase={store.phase}
-              />
+                <GameBoard
+                  board={store.board}
+                  currentCard={store.currentCard}
+                  combinationStyle={settings.combinationStyle}
+                  cellRevealMode={settings.cellRevealMode}
+                  selectedCell={selectedCell}
+                  onCellSelect={handleCellSelect}
+                  phase={store.phase}
+                  hintQuadrant={hintQuadrant}
+                  solvedCells={store.solvedCells}
+                />
             )}
           </div>
 
@@ -168,7 +233,7 @@ export default function GameScreen() {
             style={{ boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.06)' }}
           >
             {store.currentCard && (
-              <div className="w-32 md:w-40">
+              <div className="w-32 md:w-40" ref={cardAreaRef}>
                 <PlayerCard
                   card={store.currentCard}
                   isSelected={cardSelected}
@@ -205,11 +270,23 @@ export default function GameScreen() {
             </div>
           </div>
         )}
+
+        <AnimatePresence>
+          {showLevelUp && <LevelUpOverlay key="level-up" />}
+        </AnimatePresence>
+
+        {sparklesPos && (
+          <Sparkles x={sparklesPos.x} y={sparklesPos.y} color="var(--color-primary)" />
+        )}
       </div>
 
       <DragOverlay dropAnimation={null}>
         {isDragging && store.currentCard ? (
-          <div className="w-32 md:w-40 pointer-events-none" style={{ transform: 'scale(1.1) rotate(4deg)' }}>
+          <m.div
+            className="pointer-events-none"
+            animate={activeCellId ? { width: 72, rotate: 0, scale: 1.0 } : { width: 132, rotate: 4, scale: 1.1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          >
             <PlayerCard
               card={store.currentCard}
               isSelected={false}
@@ -217,7 +294,7 @@ export default function GameScreen() {
               phase={store.phase}
               isGhost
             />
-          </div>
+          </m.div>
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import { useSettingsStore } from '@/store/settingsStore'
-import { generateBoard, dealCard } from '@/utils/boardGenerator'
+import { generateBoard, dealCard, dealUniqueCard, dealWeightedCard } from '@/utils/boardGenerator'
 import { stepDifficulty } from '@/utils/difficultyEngine'
 import { useHaptics } from './useHaptics'
 import { triggerConfetti } from '@/components/magic/Confetti'
@@ -17,11 +17,11 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
     markGameStart()
     const board = generateBoard(settings.gridSize, allShapes)
     const card = dealCard(board)
-    store.startGame(board)
+    store.startGame(board, settings.gameMode)
     store.nextCard(card)
     markBoardReady()
-    log.game.info('new game started', { gridSize: settings.gridSize, shapeCount: allShapes.length })
-  }, [settings.gridSize, allShapes, store])
+    log.game.info('new game started', { gridSize: settings.gridSize, shapeCount: allShapes.length, gameMode: settings.gameMode })
+  }, [settings.gridSize, settings.gameMode, allShapes, store])
 
   const submitAnswer = useCallback(
     (col: number, row: number) => {
@@ -38,10 +38,24 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
           const freshStore = useGameStore.getState()
           const freshSettings = useSettingsStore.getState()
           if (!freshStore.board) return
+          if (freshStore.phase === 'complete') return
           if (freshSettings.adaptiveDifficulty) {
+            const prevRevealMode = freshSettings.cellRevealMode
             stepDifficulty(freshStore.streak, freshSettings)
+            const nextRevealMode = useSettingsStore.getState().cellRevealMode
+            if (nextRevealMode !== prevRevealMode) {
+              log.game.info('level up triggered', { from: prevRevealMode, to: nextRevealMode })
+              freshStore.triggerLevelUp()
+            }
           }
-          freshStore.nextCard(dealCard(freshStore.board))
+          if (freshStore.gameMode === 'unique') {
+            const nextCard = dealUniqueCard(freshStore.board, freshStore.solvedCells)
+            if (nextCard !== null) {
+              freshStore.nextCard(nextCard)
+            }
+          } else {
+            freshStore.nextCard(dealWeightedCard(freshStore.board, freshStore.solvedCells))
+          }
         }, 800)
       } else {
         haptics.wrong()
