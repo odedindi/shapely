@@ -46,7 +46,7 @@ export default function GameScreen() {
 
   useEffect(() => {
     store.resetGame()
-  }, [settings.gridSize, settings.combinationStyle])
+  }, [settings.gridSize])
 
   useEffect(() => {
     if (allShapes.length > 0 && store.phase === 'idle') {
