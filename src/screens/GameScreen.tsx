@@ -16,6 +16,7 @@ import LevelUpOverlay from '@/components/LevelUpOverlay'
 import VictoryScreen from '@/screens/VictoryScreen'
 import { Sparkles } from '@/components/magic/Sparkles'
 import { log } from '@/lib/logger'
+import { saveLeaderboardEntry, getTopN, type LeaderboardEntry } from '@/db/leaderboard'
 
 export default function GameScreen() {
   const { t } = useTranslation()
@@ -32,6 +33,7 @@ export default function GameScreen() {
   const [sparklesPos, setSparklesPos] = useState<{ x: number; y: number } | null>(null)
   const [hintQuadrant, setHintQuadrant] = useState<'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | null>(null)
   const [victoryStats, setVictoryStats] = useState<{ isNewRecord: boolean; previousBest: number } | null>(null)
+  const [topEntries, setTopEntries] = useState<LeaderboardEntry[]>([])
   const prevStreakRef = useRef(0)
   const prevLevelUpPulseRef = useRef(0)
   const cardAreaRef = useRef<HTMLDivElement>(null)
@@ -83,9 +85,14 @@ export default function GameScreen() {
         const isNewRecord = store.score > prevBest
         setVictoryStats({ isNewRecord, previousBest: prevBest })
         settings.updateBestScore(bestKey, store.score)
+        
+        getTopN(5, { gridSize: settings.gridSize, gameMode: store.gameMode }).then((top) => {
+          setTopEntries(top)
+        })
       }
     } else {
       setVictoryStats(null)
+      setTopEntries([])
     }
   }, [store.phase, store.score, store.gameMode, settings.gridSize, settings.bestScores, settings.updateBestScore, victoryStats])
 
@@ -176,6 +183,25 @@ export default function GameScreen() {
   if (store.phase === 'complete') {
     const accuracy =
       store.totalAnswers > 0 ? (store.correctAnswers / store.totalAnswers) * 100 : 0
+      
+    const handleSaveRecord = (name: string) => {
+      saveLeaderboardEntry({
+        id: crypto.randomUUID(),
+        name,
+        score: store.score,
+        timeElapsed: store.timeElapsed,
+        accuracy,
+        streak: store.bestStreak,
+        gridSize: settings.gridSize,
+        gameMode: store.gameMode,
+        recordedAt: Date.now()
+      }).then(() => {
+        getTopN(5, { gridSize: settings.gridSize, gameMode: store.gameMode }).then((top) => {
+          setTopEntries(top)
+        })
+      })
+    }
+    
     return (
       <VictoryScreen
         score={store.score}
@@ -188,6 +214,8 @@ export default function GameScreen() {
         gameMode={store.gameMode}
         onPlayAgain={startNewGame}
         onHome={() => navigate('/')}
+        onSaveRecord={handleSaveRecord}
+        topEntries={topEntries}
       />
     )
   }

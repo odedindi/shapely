@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { m } from 'framer-motion'
 import type { Variants } from 'framer-motion'
+import { Button } from '@/components/ui/button'
+import type { LeaderboardEntry } from '@/db/leaderboard'
 
 interface VictoryScreenProps {
   score: number
@@ -14,6 +16,8 @@ interface VictoryScreenProps {
   gameMode?: string
   onPlayAgain: () => void
   onHome: () => void
+  onSaveRecord?: (name: string) => void
+  topEntries?: LeaderboardEntry[]
 }
 
 function formatTime(seconds: number): string {
@@ -88,21 +92,32 @@ export default function VictoryScreen({
   previousBest = 0,
   onPlayAgain,
   onHome,
+  onSaveRecord,
+  topEntries = [],
 }: VictoryScreenProps) {
   const { t } = useTranslation()
   const animatedScore = useCountUp(score, 1200)
   const canShare = 'share' in navigator
+  const [playerName, setPlayerName] = useState('')
+  const [saved, setSaved] = useState(false)
 
   function handleShare() {
     const text = `${t('victory.score')}: ${score} | ${t('victory.accuracy')}: ${Math.round(accuracy)}% | ${t('victory.bestStreak')}: ${streak} 🔥`
     navigator.share({ title: 'Shapely', text }).catch(() => undefined)
   }
 
+  function handleSave() {
+    if (playerName.trim() && onSaveRecord && !saved) {
+      onSaveRecord(playerName.trim())
+      setSaved(true)
+    }
+  }
+
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-[var(--color-surface)] overflow-hidden relative">
+    <div className="h-screen flex flex-col items-center justify-center bg-[var(--color-surface)] overflow-y-auto relative">
       <div
         style={{
-          position: 'absolute',
+          position: 'fixed',
           inset: 0,
           background:
             'radial-gradient(ellipse 70% 50% at 50% 40%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent)',
@@ -111,7 +126,7 @@ export default function VictoryScreen({
       />
 
       <m.div
-        className="relative z-10 flex flex-col items-center gap-6 px-6 w-full max-w-sm"
+        className="relative z-10 flex flex-col items-center gap-6 px-6 w-full max-w-sm py-12"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -154,6 +169,35 @@ export default function VictoryScreen({
           )}
         </m.div>
 
+        {isNewRecord && onSaveRecord && (
+          <m.div variants={itemVariants} className="w-full">
+            {saved ? (
+              <div className="w-full py-3 text-center text-[var(--color-success)] font-bold bg-[var(--color-surface-raised)] border border-[var(--color-success)] rounded-xl">
+                {t('leaderboard.saved', { defaultValue: '✓ Saved!' })}
+              </div>
+            ) : (
+              <div className="flex gap-2 w-full">
+                <input
+                  type="text"
+                  maxLength={20}
+                  autoFocus
+                  placeholder={t('leaderboard.namePlaceholder', { defaultValue: 'Your name' })}
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[var(--color-surface-alt)] border border-[var(--color-border)] text-[var(--color-content)] placeholder:text-[var(--color-content-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+                <Button 
+                  onClick={handleSave} 
+                  disabled={!playerName.trim()}
+                  className="h-auto py-3 px-6 rounded-xl font-bold"
+                >
+                  {t('leaderboard.saveRecord', { defaultValue: 'Save' })}
+                </Button>
+              </div>
+            )}
+          </m.div>
+        )}
+
         <m.div variants={itemVariants} className="grid grid-cols-3 gap-3 w-full">
           <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[var(--color-surface-alt)] border border-[var(--color-border)]">
             <span className="text-xs text-[var(--color-content-muted)] font-medium">
@@ -181,7 +225,26 @@ export default function VictoryScreen({
           </div>
         </m.div>
 
-        <m.div variants={itemVariants} className="flex flex-col gap-3 w-full">
+        {!isNewRecord && topEntries.length > 0 && (
+          <m.div variants={itemVariants} className="w-full mt-2 bg-[var(--color-surface-raised)] border border-[var(--color-border)] rounded-xl p-4">
+            <h3 className="text-sm font-bold text-[var(--color-content-muted)] mb-3 uppercase tracking-wider text-center">
+              {t('leaderboard.topScores', { defaultValue: 'Top Scores' })}
+            </h3>
+            <div className="flex flex-col gap-2">
+              {topEntries.map((entry, index) => (
+                <div key={entry.id} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="text-[var(--color-content-muted)] w-4 text-center font-medium">{index + 1}</span>
+                    <span className="font-bold text-[var(--color-content)] truncate">{entry.name}</span>
+                  </div>
+                  <span className="font-bold text-[var(--color-primary)] tabular-nums shrink-0">{entry.score}</span>
+                </div>
+              ))}
+            </div>
+          </m.div>
+        )}
+
+        <m.div variants={itemVariants} className="flex flex-col gap-3 w-full mt-2">
           {canShare && (
             <button
               onClick={handleShare}
