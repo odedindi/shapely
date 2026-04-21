@@ -3,7 +3,5 @@
   "buildCommand": "yarn build",
   "installCommand": "yarn install",
   "outputDirectory": "dist",
-  "engines": {
-    "node": "22.x"
-  }
+  "nodeVersion": "22.x"
 }
