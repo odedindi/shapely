@@ -1,4 +1,5 @@
 import type { BoardState, CardState, CombinationStyle, CellRevealMode, GamePhase, ShapeRenderParams } from '@/shapes/types'
+import { Fragment } from 'react'
 import BoardCell from './BoardCell'
 
 interface GameBoardProps {
@@ -50,8 +51,8 @@ export default function GameBoard({
         ))}
 
         {rowShapes.map((rowShape, row) => (
-          <>
-            <div key={rowShape.id} className="flex items-center justify-center">
+          <Fragment key={rowShape.id}>
+            <div className="flex items-center justify-center">
               <div className="w-[65%] aspect-square min-w-[28px] max-w-[64px]">
                 {rowShape.render(headerParams(row + 5))}
               </div>
@@ -88,7 +89,7 @@ export default function GameBoard({
                 />
               )
             })}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>
