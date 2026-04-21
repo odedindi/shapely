@@ -266,7 +266,7 @@ export default function GameScreen() {
                   ✕
                 </button>
               </div>
-              <SettingsPanel />
+              <SettingsPanel availableShapeCount={allShapes.length} />
             </div>
           </div>
         )}

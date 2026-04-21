@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import SettingsPanel from '@/components/SettingsPanel'
+import { useShapeRegistry } from '@/hooks/useShapeRegistry'
 import { log } from '@/lib/logger'
 
 export default function SettingsScreen() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { allShapes } = useShapeRegistry()
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--color-surface)]">
@@ -26,7 +28,7 @@ export default function SettingsScreen() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto">
-          <SettingsPanel />
+          <SettingsPanel availableShapeCount={allShapes.length} />
         </div>
       </div>
     </div>

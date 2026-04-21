@@ -24,7 +24,11 @@ const LANGUAGES = [
   { value: 'ru', label: 'Русский' },
 ]
 
-export default function SettingsPanel() {
+interface SettingsPanelProps {
+  availableShapeCount?: number
+}
+
+export default function SettingsPanel({ availableShapeCount = Infinity }: SettingsPanelProps) {
   const { t } = useTranslation()
   const settings = useSettingsStore()
 
@@ -105,16 +109,27 @@ export default function SettingsPanel() {
         <label className="text-sm font-semibold text-[var(--color-content-muted)]">
           {t('settings.gridSize', { defaultValue: 'Grid Size' })}
         </label>
-        <div className="flex gap-2">
-          {([2, 3, 4, 5, 6, 7, 8, 9, 10] as const).map((size) => (
-            <button
-              key={size}
-              onClick={() => settings.updateSetting('gridSize', size)}
-              className={`w-10 h-10 rounded-lg font-bold border transition-colors ${settings.gridSize === size ? 'bg-[var(--color-primary)] text-[var(--color-primary-fg)] border-[var(--color-primary)]' : 'bg-[var(--color-surface-raised)] text-[var(--color-content)] border-[var(--color-border)]'}`}
-            >
-              {size}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap">
+          {([2, 3, 4, 5, 6, 7, 8, 9, 10] as const).map((size) => {
+            const disabled = size * 2 > availableShapeCount
+            return (
+              <button
+                key={size}
+                onClick={() => !disabled && settings.updateSetting('gridSize', size)}
+                disabled={disabled}
+                title={disabled ? t('settings.gridSizeUnavailable', { defaultValue: 'Not enough shapes for this grid size' }) : undefined}
+                className={`w-10 h-10 rounded-lg font-bold border transition-colors ${
+                  settings.gridSize === size
+                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-fg)] border-[var(--color-primary)]'
+                    : disabled
+                      ? 'opacity-30 cursor-not-allowed bg-[var(--color-surface-raised)] text-[var(--color-content-muted)] border-[var(--color-border)]'
+                      : 'bg-[var(--color-surface-raised)] text-[var(--color-content)] border-[var(--color-border)]'
+                }`}
+              >
+                {size}
+              </button>
+            )
+          })}
         </div>
       </section>
 
