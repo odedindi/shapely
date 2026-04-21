@@ -33,18 +33,18 @@ const BoardCell = memo(function BoardCell({
 
   const paramsA = useMemo<ShapeRenderParams>(() => ({
     fillColor: `var(--shape-color-${colorIdx})`,
-    strokeColor: 'var(--color-content-muted)',
+    strokeColor: 'var(--color-border)',
     strokeWidth: 2,
     rotation: 0,
-    opacity: 0.9,
+    opacity: 1,
   }), [colorIdx])
 
   const paramsB = useMemo<ShapeRenderParams>(() => ({
     fillColor: `var(--shape-color-${colorIdxB})`,
-    strokeColor: 'var(--color-content-muted)',
-    strokeWidth: 1.5,
+    strokeColor: 'var(--color-border)',
+    strokeWidth: 2,
     rotation: 0,
-    opacity: 0.82,
+    opacity: 1,
   }), [colorIdxB])
 
   const isHidden = revealMode === 'hidden' && !isSolved
@@ -114,7 +114,7 @@ const BoardCell = memo(function BoardCell({
           <span className="text-2xl text-[var(--color-content-muted)] select-none">?</span>
         </div>
       ) : (
-        <div className={cn('w-full h-full p-[8%]', isPeek && !isOver && 'blur-sm hover:blur-none focus:blur-none transition-[filter] duration-300', isPeek && isOver && 'transition-[filter] duration-150')}>
+        <div className={cn('w-full h-full p-[10%]', isPeek && !isOver && 'blur-sm hover:blur-none focus:blur-none transition-[filter] duration-300', isPeek && isOver && 'transition-[filter] duration-150')}>
           <ShapeCombiner
             shapeA={columnShape}
             shapeB={rowShape}
