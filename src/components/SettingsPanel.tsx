@@ -110,7 +110,7 @@ export default function SettingsPanel({ availableShapeCount = Infinity }: Settin
           {t('settings.gridSize', { defaultValue: 'Grid Size' })}
         </label>
         <div className="flex gap-2 flex-wrap">
-          {([2, 3, 4, 5, 6, 7, 8, 9, 10] as const).map((size) => {
+          {([2, 3, 4, 5, 6, 7] as const).map((size) => {
             const disabled = size * 2 > availableShapeCount
             return (
               <button

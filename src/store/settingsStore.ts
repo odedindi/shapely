@@ -4,7 +4,7 @@ import type { CombinationStyle, CellRevealMode, DarkMode, Theme, GameMode } from
 import { log } from '@/lib/logger'
 
 export interface SettingsState {
-  gridSize: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+  gridSize: 2 | 3 | 4 | 5 | 6 | 7
   cellRevealMode: CellRevealMode
   combinationStyle: CombinationStyle
   adaptiveDifficulty: boolean
@@ -51,6 +51,10 @@ export const useSettingsStore = create<SettingsState>()(
           return s
         }),
     }),
-    { name: 'shapely-settings' }
+    { name: 'shapely-settings', merge: (persisted, current) => {
+      const p = persisted as Partial<SettingsState>
+      const clampedGridSize = Math.min(p.gridSize ?? current.gridSize, 7) as SettingsState['gridSize']
+      return { ...current, ...p, gridSize: clampedGridSize }
+    } }
   )
 )
