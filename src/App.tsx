@@ -8,6 +8,7 @@ const HomeScreen = lazy(() => import('@/screens/HomeScreen'))
 const GameScreen = lazy(() => import('@/screens/GameScreen'))
 const ShapeEditorScreen = lazy(() => import('@/screens/ShapeEditorScreen'))
 const SettingsScreen = lazy(() => import('@/screens/SettingsScreen'))
+const LeaderboardScreen = lazy(() => import('@/screens/LeaderboardScreen'))
 
 const RTL_LANGUAGES = new Set(['he', 'ar'])
 
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
   { path: '/game', element: <GameScreen /> },
   { path: '/settings', element: <SettingsScreen /> },
   { path: '/shape-editor', element: <ShapeEditorScreen /> },
+  { path: '/leaderboard', element: <LeaderboardScreen /> },
 ])
 
 export default function App() {

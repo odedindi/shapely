@@ -75,5 +75,22 @@
   "editor.fillColor": "Fill Color",
   "editor.strokeColor": "Stroke Color",
   "editor.opacity": "Opacity",
-  "editor.preview4": "Preview Modes"
+  "editor.preview4": "Preview Modes",
+
+  "leaderboard.title": "Leaderboard",
+  "leaderboard.empty": "No scores yet. Play a game!",
+  "leaderboard.clearBoard": "Clear Board",
+  "leaderboard.confirmClear": "Are you sure? This cannot be undone.",
+  "leaderboard.cancel": "Cancel",
+  "leaderboard.confirm": "Confirm",
+  "leaderboard.saveRecord": "Save Record",
+  "leaderboard.namePlaceholder": "Your name",
+  "leaderboard.saved": "✓ Saved!",
+  "leaderboard.topScores": "Top Scores",
+  "leaderboard.rank": "Rank",
+  "leaderboard.player": "Player",
+  "leaderboard.score": "Score",
+  "leaderboard.time": "Time",
+  "leaderboard.accuracy": "Accuracy",
+  "leaderboard.streak": "Streak"
 }
