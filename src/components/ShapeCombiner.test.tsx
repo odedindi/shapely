@@ -260,6 +260,16 @@ describe('ShapeCombiner — fill mode', () => {
     expect(rect.getAttribute('clip-path')).toMatch(/url\(#/)
   })
 
+  it('clipPath shape body has no fill="currentColor" — MDI icon paths must use resolved color', () => {
+    const { container } = render(
+      <ShapeCombiner shapeA={shapeA_mdi} shapeB={shapeB} paramsA={{ ...baseParams, fillColor: 'white' }} paramsB={baseParams} mode="fill" />
+    )
+    const clipPath = container.querySelector('clipPath')!
+    // "currentColor" cannot resolve CSS vars in SVG presentation attributes.
+    // Any fill inside a <clipPath> must be an explicit color value.
+    expect(clipPath.innerHTML).not.toContain('fill="currentColor"')
+  })
+
   it('clipPath contains a <g> with scale transform mapping shapeA viewBox to 100x100', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA_mdi} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />

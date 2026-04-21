@@ -21,8 +21,10 @@ export function createMdiShape(id: string, iconName: string, displayName: string
   const { width, height, body } = loadMdiIcon(iconName)
   const viewBox = `0 0 ${width} ${height}`
 
-  const svgBody = ({ fillColor, strokeColor, strokeWidth, rotation, opacity }: ShapeRenderParams) =>
-    `<g fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" paint-order="stroke fill" opacity="${opacity}" transform="rotate(${rotation} ${width / 2} ${height / 2})">${body}</g>`
+  const svgBody = ({ fillColor, strokeColor, strokeWidth, rotation, opacity }: ShapeRenderParams) => {
+    const resolvedBody = body.replace(/fill="currentColor"/g, `fill="${fillColor}"`)
+    return `<g fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" paint-order="stroke fill" opacity="${opacity}" transform="rotate(${rotation} ${width / 2} ${height / 2})">${resolvedBody}</g>`
+  }
 
   return {
     id,
