@@ -2,6 +2,5 @@
   "framework": "vite",
   "buildCommand": "yarn build",
   "installCommand": "yarn install",
-  "outputDirectory": "dist",
-  "nodeVersion": "22.x"
+  "outputDirectory": "dist"
 }
