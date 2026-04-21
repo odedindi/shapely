@@ -76,18 +76,27 @@ export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }
     const clipBody = shapeA.svgBody({ ...paramsA, fillColor: 'white', strokeColor: 'white', strokeWidth: 0, opacity: 1 })
     const tileBody = shapeB.svgBody({ ...paramsB, strokeWidth: 0 })
 
+    const [, , vbAW, vbAH] = shapeA.viewBox.split(' ').map(Number)
+    const [, , vbBW, vbBH] = shapeB.viewBox.split(' ').map(Number)
+    const clipScaleX = VB / vbAW
+    const clipScaleY = VB / vbAH
+    const tileScaleX = TILE / vbBW
+    const tileScaleY = TILE / vbBH
+
     return (
       <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`}>
         <defs>
           <clipPath id={clipId}>
-            <svg x={0} y={0} width={VB} height={VB} viewBox={shapeA.viewBox}>
-              <g dangerouslySetInnerHTML={{ __html: clipBody }} />
-            </svg>
+            <g
+              transform={`scale(${clipScaleX} ${clipScaleY})`}
+              dangerouslySetInnerHTML={{ __html: clipBody }}
+            />
           </clipPath>
           <pattern id={patId} x="0" y="0" width={TILE} height={TILE} patternUnits="userSpaceOnUse">
-            <svg x={0} y={0} width={TILE} height={TILE} viewBox={shapeB.viewBox}>
-              <g dangerouslySetInnerHTML={{ __html: tileBody }} />
-            </svg>
+            <g
+              transform={`scale(${tileScaleX} ${tileScaleY})`}
+              dangerouslySetInnerHTML={{ __html: tileBody }}
+            />
           </pattern>
         </defs>
         <rect width={VB} height={VB} fill={`url(#${patId})`} clipPath={`url(#${clipId})`} />

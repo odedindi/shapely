@@ -247,22 +247,32 @@ describe('ShapeCombiner — fill mode', () => {
     expect(rect.getAttribute('clip-path')).toMatch(/url\(#/)
   })
 
-  it('clipPath slot maps shapeA viewBox correctly', () => {
+  it('clipPath contains a <g> with scale transform mapping shapeA viewBox to 100x100', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA_mdi} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const clipSvg = container.querySelector('clipPath svg')!
-    expect(clipSvg.getAttribute('viewBox')).toBe('0 0 24 24')
-    expect(clipSvg.getAttribute('width')).toBe('100')
+    const clipG = container.querySelector('clipPath g[transform]')!
+    expect(clipG).toBeTruthy()
+    // MDI viewBox is 24x24; VB=100 → scale ≈ 4.166...
+    const transform = clipG.getAttribute('transform') ?? ''
+    expect(transform).toMatch(/scale\(/)
+    const scaleMatch = transform.match(/scale\(([\d.]+)/)
+    expect(scaleMatch).toBeTruthy()
+    expect(Number(scaleMatch![1])).toBeCloseTo(100 / 24, 2)
   })
 
-  it('pattern slot maps shapeB viewBox correctly', () => {
+  it('pattern contains a <g> with scale transform mapping shapeB viewBox to tile size', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB_mdi} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const patSvg = container.querySelector('pattern svg')!
-    expect(patSvg.getAttribute('viewBox')).toBe('0 0 24 24')
-    expect(Number(patSvg.getAttribute('width'))).toBe(20)
+    const patG = container.querySelector('pattern g[transform]')!
+    expect(patG).toBeTruthy()
+    // MDI viewBox is 24x24; TILE=20 → scale ≈ 0.833...
+    const transform = patG.getAttribute('transform') ?? ''
+    expect(transform).toMatch(/scale\(/)
+    const scaleMatch = transform.match(/scale\(([\d.]+)/)
+    expect(scaleMatch).toBeTruthy()
+    expect(Number(scaleMatch![1])).toBeCloseTo(20 / 24, 2)
   })
 })
 
