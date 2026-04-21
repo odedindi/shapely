@@ -36,7 +36,7 @@ const BoardCell = memo(function BoardCell({
     strokeColor: 'var(--color-border)',
     strokeWidth: 2,
     rotation: 0,
-    opacity: 1,
+    opacity: 0.88,
   }), [colorIdx])
 
   const paramsB = useMemo<ShapeRenderParams>(() => ({
@@ -44,7 +44,7 @@ const BoardCell = memo(function BoardCell({
     strokeColor: 'var(--color-border)',
     strokeWidth: 2,
     rotation: 0,
-    opacity: 1,
+    opacity: 0.78,
   }), [colorIdxB])
 
   const isHidden = revealMode === 'hidden' && !isSolved
