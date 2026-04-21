@@ -221,12 +221,23 @@ describe('ShapeCombiner — fill mode', () => {
     expect(clipCircle.getAttribute('fill')).toBe('white')
   })
 
-  it('shapeB in pattern has strokeWidth=0', () => {
+  it('pattern tile has a background rect for CSS-var color resolution', () => {
     const { container } = render(
-      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
+      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={{ ...baseParams, fillColor: 'red' }} paramsB={baseParams} mode="fill" />
     )
-    const patCircle = container.querySelector('pattern circle')!
-    expect(patCircle.getAttribute('stroke-width')).toBe('0')
+    const patRect = container.querySelector('pattern rect')!
+    expect(patRect).toBeTruthy()
+    expect(patRect.getAttribute('fill')).toBe('red')
+  })
+
+  it('pattern tile <g> uses color attribute for currentColor inheritance', () => {
+    const { container } = render(
+      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={{ ...baseParams, fillColor: 'blue' }} mode="fill" />
+    )
+    const patG = container.querySelector('pattern g[color]')!
+    expect(patG).toBeTruthy()
+    expect(patG.getAttribute('color')).toBe('blue')
+    expect(patG.getAttribute('fill')).toBe('currentColor')
   })
 
   it('pattern tile size equals VB / TILE_COUNT (20)', () => {
@@ -242,7 +253,7 @@ describe('ShapeCombiner — fill mode', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="fill" />
     )
-    const rect = container.querySelector('rect')!
+    const rect = container.querySelector('rect:not(pattern rect)')!
     expect(rect.getAttribute('fill')).toMatch(/url\(#/)
     expect(rect.getAttribute('clip-path')).toMatch(/url\(#/)
   })
