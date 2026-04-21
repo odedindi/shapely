@@ -21,6 +21,8 @@ export interface ShapeDefinition {
   id: string
   name: string
   source: 'builtin' | 'custom'
+  viewBox: string
+  svgBody: (params: ShapeRenderParams) => string
   render: (params: ShapeRenderParams) => ReactElement
 }
 
