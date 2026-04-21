@@ -1,4 +1,4 @@
-import type { ShapeDefinition } from '../types'
+import { makeShape } from '../makeShape'
 
 function polygonPoints(cx: number, cy: number, r: number, sides: number, offsetDeg = -90) {
   return Array.from({ length: sides }, (_, i) => {
@@ -7,21 +7,8 @@ function polygonPoints(cx: number, cy: number, r: number, sides: number, offsetD
   }).join(' ')
 }
 
-export const pentagon: ShapeDefinition = {
-  id: 'pentagon',
-  name: 'Pentagon',
-  source: 'builtin',
-  render: ({ fillColor, strokeColor, strokeWidth, rotation, opacity }) => (
-    <svg width="100%" height="100%" viewBox="0 0 100 100">
-      <polygon
-        points={polygonPoints(50, 50, 45, 5)}
-        fill={fillColor}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-        opacity={opacity}
-        transform={`rotate(${rotation}, 50, 50)`}
-      />
-    </svg>
-  ),
-}
+export const pentagon = makeShape(
+  { id: 'pentagon', name: 'Pentagon', source: 'builtin', viewBox: '0 0 100 100' },
+  ({ fillColor, strokeColor, strokeWidth, rotation, opacity }) =>
+    `<polygon points="${polygonPoints(50, 50, 45, 5)}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linejoin="round" opacity="${opacity}" transform="rotate(${rotation}, 50, 50)"/>`,
+)

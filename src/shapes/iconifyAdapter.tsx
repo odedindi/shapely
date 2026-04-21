@@ -10,34 +10,6 @@ function loadMdiIcon(iconName: string): { width: number; height: number; body: s
   return { width: data.width ?? 24, height: data.height ?? 24, body: data.body }
 }
 
-function MdiShapeRenderer(
-  { width, height, body }: { width: number; height: number; body: string },
-  { fillColor, strokeColor, strokeWidth, rotation, opacity }: ShapeRenderParams,
-) {
-  return (
-    <svg
-      width="100%"
-      height="100%"
-      viewBox={`0 0 ${width} ${height}`}
-      xmlns="http://www.w3.org/2000/svg"
-      // `color` drives fill="currentColor" on all child paths
-      style={{
-        color: fillColor,           // drives fill="currentColor" on all child paths
-        stroke: strokeColor,
-        strokeWidth,
-        paintOrder: 'stroke fill',  // stroke renders outside fill, keeping fill area solid
-        transform: `rotate(${rotation}deg)`,
-        opacity,
-        overflow: 'visible',
-      }}
-      // Safe: body comes entirely from the @iconify-json/mdi npm package,
-      // never from user input.
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: body }}
-    />
-  )
-}
-
 /**
  * Creates a ShapeDefinition backed by a Material Design Icons icon.
  *
@@ -46,12 +18,29 @@ function MdiShapeRenderer(
  * @param displayName Human-readable name shown in UI
  */
 export function createMdiShape(id: string, iconName: string, displayName: string): ShapeDefinition {
-  const iconData = loadMdiIcon(iconName)
+  const { width, height, body } = loadMdiIcon(iconName)
+  const viewBox = `0 0 ${width} ${height}`
+
+  const svgBody = ({ fillColor, strokeColor, strokeWidth, rotation, opacity }: ShapeRenderParams) =>
+    `<g fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" paint-order="stroke fill" opacity="${opacity}" transform="rotate(${rotation} ${width / 2} ${height / 2})">${body}</g>`
 
   return {
     id,
     name: displayName,
     source: 'builtin',
-    render: (params) => MdiShapeRenderer(iconData, params),
+    viewBox,
+    svgBody,
+    render: (params) => (
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={viewBox}
+        xmlns="http://www.w3.org/2000/svg"
+        // Safe: body comes entirely from the @iconify-json/mdi npm package,
+        // never from user input.
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: svgBody(params) }}
+      />
+    ),
   }
 }
