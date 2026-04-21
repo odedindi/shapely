@@ -53,7 +53,7 @@ describe('ShapeCombiner — overlay mode', () => {
     expect(slotA.getAttribute('height')).toBe('100')
   })
 
-  it('shapeB slot is inset and smaller than shapeA (70% size)', () => {
+  it('shapeB slot is inset and smaller than shapeA (72% size)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="overlay" />
     )
@@ -63,25 +63,25 @@ describe('ShapeCombiner — overlay mode', () => {
     const h = Number(slotB.getAttribute('height'))
     expect(w).toBeLessThan(100)
     expect(h).toBeLessThan(100)
-    expect(w).toBe(70)
-    expect(h).toBe(70)
+    expect(w).toBe(72)
+    expect(h).toBe(72)
   })
 
-  it('shapeB slot is centered (x=y=15)', () => {
+  it('shapeB slot is inset (x=y=14)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="overlay" />
     )
     const allSlots = container.querySelectorAll<SVGSVGElement>('svg svg')
     const slotB = allSlots[allSlots.length - 1]
-    expect(Number(slotB.getAttribute('x'))).toBe(15)
-    expect(Number(slotB.getAttribute('y'))).toBe(15)
+    expect(Number(slotB.getAttribute('x'))).toBe(14)
+    expect(Number(slotB.getAttribute('y'))).toBe(14)
   })
 
-  it('shapeB is wrapped in a rotate(30) group', () => {
+  it('shapeB is wrapped in a rotate group (±30 depending on swap)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="overlay" />
     )
-    const rotatedGroup = container.querySelector('g[transform*="rotate(30"]')
+    const rotatedGroup = container.querySelector('g[transform*="rotate(30"]') ?? container.querySelector('g[transform*="rotate(-30"]')
     expect(rotatedGroup).toBeTruthy()
   })
 
@@ -121,16 +121,16 @@ describe('ShapeCombiner — silhouette mode', () => {
     expect(Number(circles[1].getAttribute('opacity'))).toBeLessThan(1)
   })
 
-  it('shapeA fills full 100x100 slot', () => {
+  it('shapeA slot is 72x72 (Venn-style overlap)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="silhouette" />
     )
     const slotA = container.querySelector<SVGSVGElement>('svg > svg')!
-    expect(slotA.getAttribute('width')).toBe('100')
-    expect(slotA.getAttribute('height')).toBe('100')
+    expect(slotA.getAttribute('width')).toBe('72')
+    expect(slotA.getAttribute('height')).toBe('72')
   })
 
-  it('shapeB slot is slightly inset from edges', () => {
+  it('shapeB slot is offset (Venn overlap, no rotation group)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="silhouette" />
     )
@@ -139,13 +139,7 @@ describe('ShapeCombiner — silhouette mode', () => {
     expect(Number(slotB.getAttribute('x'))).toBeGreaterThan(0)
     expect(Number(slotB.getAttribute('y'))).toBeGreaterThan(0)
     expect(Number(slotB.getAttribute('width'))).toBeLessThan(100)
-  })
-
-  it('shapeB is wrapped in a rotate(18) group', () => {
-    const { container } = render(
-      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="silhouette" />
-    )
-    expect(container.querySelector('g[transform*="rotate(18"]')).toBeTruthy()
+    expect(container.querySelector('g[transform*="rotate"]')).toBeNull()
   })
 })
 
@@ -183,7 +177,7 @@ describe('ShapeCombiner — nested mode', () => {
     expect(Number(slotB.getAttribute('height'))).toBeLessThan(60)
   })
 
-  it('shapeB slot is centered within shapeA bounds', () => {
+  it('shapeB slot is centered within shapeA bounds (no rotation)', () => {
     const { container } = render(
       <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="nested" />
     )
@@ -194,13 +188,7 @@ describe('ShapeCombiner — nested mode', () => {
     const w = Number(slotB.getAttribute('width'))
     expect(x + w / 2).toBeCloseTo(50, 0)
     expect(y + w / 2).toBeCloseTo(50, 0)
-  })
-
-  it('shapeB is wrapped in a rotate(22.5) group', () => {
-    const { container } = render(
-      <ShapeCombiner shapeA={shapeA} shapeB={shapeB} paramsA={baseParams} paramsB={baseParams} mode="nested" />
-    )
-    expect(container.querySelector('g[transform*="rotate(22.5"]')).toBeTruthy()
+    expect(container.querySelector('g[transform*="rotate"]')).toBeNull()
   })
 })
 

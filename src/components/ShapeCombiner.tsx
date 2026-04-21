@@ -24,48 +24,73 @@ function ShapeSlot({
   )
 }
 
+/**
+ * Stable swap decision: returns true when shapeA should take the "secondary" role.
+ * Deterministic per pair — same result every render for a given (idA, idB).
+ */
+function shouldSwap(idA: string, idB: string): boolean {
+  return idA > idB
+}
+
 export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }: ShapeCombinerProps) {
   const uid = useId().replace(/:/g, '')
+  const swap = shouldSwap(shapeA.id, shapeB.id)
 
   if (mode === 'overlay') {
     const shadowId = `${uid}-shadow`
-    const paramsB2: ShapeRenderParams = { ...paramsB, opacity: paramsB.opacity * 0.95 }
+    // swap determines which shape is large (back) and which is small+rotated (front)
+    const [back, backP, front, frontP] = swap
+      ? [shapeB, paramsB, shapeA, paramsA]
+      : [shapeA, paramsA, shapeB, paramsB]
+    const frontP2: ShapeRenderParams = { ...frontP, opacity: frontP.opacity * 0.92 }
+    const rotation = swap ? -30 : 30
     return (
       <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
         <defs>
           <filter id={shadowId} x="-25%" y="-25%" width="150%" height="150%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.28" />
+            <feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.32" />
           </filter>
         </defs>
-        <ShapeSlot shape={shapeA} params={paramsA} x={0} y={0} size={VB} />
-        <g transform="rotate(30 50 50)" filter={`url(#${shadowId})`}>
-          <ShapeSlot shape={shapeB} params={paramsB2} x={15} y={15} size={70} />
+        <ShapeSlot shape={back} params={backP} x={0} y={0} size={VB} />
+        <g transform={`rotate(${rotation} 50 50)`} filter={`url(#${shadowId})`}>
+          <ShapeSlot shape={front} params={frontP2} x={14} y={14} size={72} />
         </g>
       </svg>
     )
   }
 
   if (mode === 'silhouette') {
-    const silA: ShapeRenderParams = { ...paramsA, opacity: 0.72, strokeWidth: Math.max(1, paramsA.strokeWidth * 0.5) }
-    const silB: ShapeRenderParams = { ...paramsB, opacity: 0.6, strokeWidth: Math.max(1, paramsB.strokeWidth * 0.5) }
+    // Offset the two shapes so they overlap ~40% in the centre (Venn-style)
+    // swap decides which is upper-left vs lower-right
+    const [first, firstP, second, secondP] = swap
+      ? [shapeB, paramsB, shapeA, paramsA]
+      : [shapeA, paramsA, shapeB, paramsB]
+    const firstP2: ShapeRenderParams = { ...firstP, opacity: 0.82 }
+    const secondP2: ShapeRenderParams = { ...secondP, opacity: 0.72 }
+    const SIZE = 72
+    const OFFSET = 28  // second shape offset from top-left of first
     return (
       <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
-        <ShapeSlot shape={shapeA} params={silA} x={0} y={0} size={VB} />
-        <g transform="rotate(18 50 50)">
-          <ShapeSlot shape={shapeB} params={silB} x={8} y={8} size={84} />
-        </g>
+        <ShapeSlot shape={first} params={firstP2} x={0} y={0} size={SIZE} />
+        <ShapeSlot shape={second} params={secondP2} x={OFFSET} y={OFFSET} size={SIZE} />
       </svg>
     )
   }
 
   if (mode === 'nested') {
-    const frameA: ShapeRenderParams = { ...paramsA, fillColor: 'none' }
+    // swap decides which shape is the container (outline) and which is nested inside
+    const [container, containerP, inner, innerP] = swap
+      ? [shapeB, paramsB, shapeA, paramsA]
+      : [shapeA, paramsA, shapeB, paramsB]
+    const frameP: ShapeRenderParams = {
+      ...containerP,
+      fillColor: 'none',
+      strokeWidth: Math.max(containerP.strokeWidth, 3),
+    }
     return (
       <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
-        <ShapeSlot shape={shapeA} params={frameA} x={0} y={0} size={VB} />
-        <g transform="rotate(22.5 50 50)">
-          <ShapeSlot shape={shapeB} params={paramsB} x={26} y={26} size={48} />
-        </g>
+        <ShapeSlot shape={container} params={frameP} x={0} y={0} size={VB} />
+        <ShapeSlot shape={inner} params={innerP} x={27} y={27} size={46} />
       </svg>
     )
   }
@@ -99,11 +124,23 @@ export default function ShapeCombiner({ shapeA, shapeB, paramsA, paramsB, mode }
     )
   }
 
+  // side-by-side: render both shapes in their own 100×100 viewBox so visual weight is normalized
+  const HALF = 100
+  const GAP = 10
+  const TOTAL_W = HALF * 2 + GAP
   return (
-    <svg width="100%" height="100%" viewBox="0 0 210 100">
-      <ShapeSlot shape={shapeA} params={paramsA} x={0} y={0} size={100} />
-      <line x1="105" y1="15" x2="105" y2="85" stroke="var(--color-border)" strokeWidth="1.5" opacity="0.6" />
-      <ShapeSlot shape={shapeB} params={paramsB} x={110} y={0} size={100} />
+    <svg width="100%" height="100%" viewBox={`0 0 ${TOTAL_W} ${HALF}`}>
+      <svg x={0} y={0} width={HALF} height={HALF} viewBox={shapeA.viewBox} overflow="visible">
+        <g dangerouslySetInnerHTML={{ __html: shapeA.svgBody(paramsA) }} />
+      </svg>
+      <line
+        x1={HALF + GAP / 2} y1={15}
+        x2={HALF + GAP / 2} y2={85}
+        stroke="var(--color-border)" strokeWidth="1.5" opacity="0.5"
+      />
+      <svg x={HALF + GAP} y={0} width={HALF} height={HALF} viewBox={shapeB.viewBox} overflow="visible">
+        <g dangerouslySetInnerHTML={{ __html: shapeB.svgBody(paramsB) }} />
+      </svg>
     </svg>
   )
 }
