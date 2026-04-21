@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { m } from 'framer-motion'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import type { CardState, GamePhase, ShapeRenderParams } from '@/shapes/types'
+import type { CardState, GamePhase, ShapeRenderParams, CombinationStyle } from '@/shapes/types'
 import ShapeCombiner from './ShapeCombiner'
 import { cn } from '@/lib/utils'
 
@@ -12,9 +12,10 @@ interface PlayerCardProps {
   onSelect: () => void
   phase: GamePhase
   isGhost?: boolean
+  combinationStyle?: CombinationStyle
 }
 
-export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost = false }: PlayerCardProps) {
+export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost = false, combinationStyle = 'overlay' }: PlayerCardProps) {
   const { t } = useTranslation()
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -110,7 +111,7 @@ export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost 
           shapeB={card.rowShape}
           paramsA={paramsA}
           paramsB={paramsB}
-          mode="overlay"
+          mode={combinationStyle}
         />
 
         {!isGhost && (

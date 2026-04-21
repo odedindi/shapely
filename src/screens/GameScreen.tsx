@@ -268,6 +268,7 @@ export default function GameScreen() {
                   isSelected={cardSelected}
                   onSelect={handleCardSelect}
                   phase={store.phase}
+                  combinationStyle={settings.combinationStyle}
                 />
               </div>
             )}
@@ -321,6 +322,7 @@ export default function GameScreen() {
               isSelected={false}
               onSelect={() => undefined}
               phase={store.phase}
+              combinationStyle={settings.combinationStyle}
               isGhost
             />
           </m.div>
