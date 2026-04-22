@@ -42,9 +42,10 @@ export default function GameScreen() {
 
   const { startNewGame, submitAnswer } = useGameLogic(allShapes)
 
+  const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 8 } })
+  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    ...(settings.interactionMode !== 'tap' ? [mouseSensor, touchSensor] : []),
   )
 
   useEffect(() => {
@@ -114,6 +115,7 @@ export default function GameScreen() {
   }, [store.phase, store.score, store.gameMode, settings.gridSize, settings.bestScores, settings.updateBestScore, victoryStats])
 
   function handleDragStart(_event: DragStartEvent) {
+    if (settings.interactionMode === 'tap') return
     setIsDragging(true)
     setCardSelected(false)
     setActiveCellId(null)

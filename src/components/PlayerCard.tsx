@@ -3,6 +3,7 @@ import { m } from 'framer-motion'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { CardState, GamePhase, ShapeRenderParams, CombinationStyle } from '@/shapes/types'
+import { useSettingsStore } from '@/store/settingsStore'
 import ShapeCombiner from './ShapeCombiner'
 import { cn } from '@/lib/utils'
 
@@ -17,10 +18,11 @@ interface PlayerCardProps {
 
 export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost = false, combinationStyle = 'overlay' }: PlayerCardProps) {
   const { t } = useTranslation()
+  const interactionMode = useSettingsStore((s) => s.interactionMode)
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: 'player-card',
-    disabled: isGhost || phase !== 'playing',
+    disabled: isGhost || phase !== 'playing' || interactionMode === 'tap',
   })
 
   const colIdx = (card.correctCell.col % 8) + 1
