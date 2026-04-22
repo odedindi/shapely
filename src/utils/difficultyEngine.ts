@@ -1,7 +1,7 @@
-import type { SettingsState } from '@/store/settingsStore'
+import type { GameSettingsState } from '@/store/gameSettingsStore'
 import { log } from '@/lib/logger'
 
-type Settings = Pick<SettingsState, 'gridSize' | 'cellRevealMode' | 'combinationStyle' | 'updateSetting'>
+type Settings = Pick<GameSettingsState, 'gridSize' | 'cellRevealMode' | 'combinationStyle' | 'updateSetting'>
 
 export function stepDifficulty(streak: number, settings: Settings) {
   if (streak > 0 && streak % 3 === 0) {

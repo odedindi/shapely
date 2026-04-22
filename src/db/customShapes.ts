@@ -1,8 +1,7 @@
 import type { CustomShapeRecord } from '@/shapes/types'
 import { log } from '@/lib/logger'
+import { openDB, storeTx } from './index'
 
-const DB_NAME = 'shapely'
-const DB_VERSION = 3
 const STORE_NAME = 'custom-shapes'
 const SEED_KEY = 'shapely-seeded-v1'
 
@@ -53,46 +52,10 @@ const SEED_SHAPES: CustomShapeRecord[] = [
   },
 ]
 
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = (e) => {
-      const db = (e.target as IDBOpenDBRequest).result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' })
-      }
-      if (!db.objectStoreNames.contains('leaderboard')) {
-        const store = db.createObjectStore('leaderboard', { keyPath: 'id' })
-        store.createIndex('by-score', 'score', { unique: false })
-      }
-      if (e.oldVersion < 3) {
-        if (!db.objectStoreNames.contains('shape-mastery')) {
-          const masteryStore = db.createObjectStore('shape-mastery', { keyPath: 'combinationId' })
-          masteryStore.createIndex('by-lastSeen', 'lastSeenAt', { unique: false })
-        }
-        if (!db.objectStoreNames.contains('answer-events')) {
-          const eventsStore = db.createObjectStore('answer-events', { keyPath: 'id' })
-          eventsStore.createIndex('by-combination', 'combinationId', { unique: false })
-          eventsStore.createIndex('by-recorded-at', 'recordedAt', { unique: false })
-        }
-      }
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-function tx(
-  db: IDBDatabase,
-  mode: IDBTransactionMode
-): IDBObjectStore {
-  return db.transaction(STORE_NAME, mode).objectStore(STORE_NAME)
-}
-
 export async function saveCustomShape(shape: CustomShapeRecord): Promise<void> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const req = tx(db, 'readwrite').put(shape)
+    const req = storeTx(db, STORE_NAME, 'readwrite').put(shape)
     req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
   })
@@ -101,7 +64,7 @@ export async function saveCustomShape(shape: CustomShapeRecord): Promise<void> {
 export async function getAllCustomShapes(): Promise<CustomShapeRecord[]> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const req = tx(db, 'readonly').getAll()
+    const req = storeTx(db, STORE_NAME, 'readonly').getAll()
     req.onsuccess = () => resolve(req.result as CustomShapeRecord[])
     req.onerror = () => reject(req.error)
   })
@@ -110,7 +73,7 @@ export async function getAllCustomShapes(): Promise<CustomShapeRecord[]> {
 export async function deleteCustomShape(id: string): Promise<void> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const req = tx(db, 'readwrite').delete(id)
+    const req = storeTx(db, STORE_NAME, 'readwrite').delete(id)
     req.onsuccess = () => resolve()
     req.onerror = () => reject(req.error)
   })
@@ -119,7 +82,7 @@ export async function deleteCustomShape(id: string): Promise<void> {
 export async function getCustomShape(id: string): Promise<CustomShapeRecord | undefined> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const req = tx(db, 'readonly').get(id)
+    const req = storeTx(db, STORE_NAME, 'readonly').get(id)
     req.onsuccess = () => resolve(req.result as CustomShapeRecord | undefined)
     req.onerror = () => reject(req.error)
   })
@@ -130,7 +93,7 @@ export async function seedDefaultShapes(): Promise<void> {
   try {
     const db = await openDB()
     const existing = await new Promise<CustomShapeRecord[]>((resolve, reject) => {
-      const req = tx(db, 'readonly').getAll()
+      const req = storeTx(db, STORE_NAME, 'readonly').getAll()
       req.onsuccess = () => resolve(req.result as CustomShapeRecord[])
       req.onerror = () => reject(req.error)
     })

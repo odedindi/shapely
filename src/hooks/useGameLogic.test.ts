@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useGameStore } from '@/store/gameStore'
-import { useSettingsStore } from '@/store/settingsStore'
+import { useGameSettingsStore } from '@/store/gameSettingsStore'
 import { makeShape } from '@/shapes/makeShape'
 import type { BoardState, CardState } from '@/shapes/types'
 import { useGameLogic } from './useGameLogic'
@@ -174,7 +174,7 @@ describe('submitAnswer phase guard', () => {
 describe('interactionMode guard in handleCellSelect logic', () => {
   it('interactionMode drag: submitAnswer still works via store directly (drag path bypasses cardSelected)', () => {
     const { card } = setupGame()
-    useSettingsStore.getState().updateSetting('interactionMode', 'drag')
+    useGameSettingsStore.getState().updateSetting('interactionMode', 'drag')
 
     const gameStore = useGameStore.getState()
     gameStore.submitAnswer(card.correctCell.col, card.correctCell.row)
@@ -183,7 +183,7 @@ describe('interactionMode guard in handleCellSelect logic', () => {
 
   it('interactionMode tap: store submitAnswer still works (tap path goes through store)', () => {
     const { card } = setupGame()
-    useSettingsStore.getState().updateSetting('interactionMode', 'tap')
+    useGameSettingsStore.getState().updateSetting('interactionMode', 'tap')
 
     const gameStore = useGameStore.getState()
     gameStore.submitAnswer(card.correctCell.col, card.correctCell.row)

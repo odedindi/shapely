@@ -1,12 +1,13 @@
 import { log } from '@/lib/logger'
+import { openDB, storeTx } from './index'
 
 export interface ShapeMastery {
-  combinationId: string          // `${colShapeId}::${rowShapeId}`
+  combinationId: string
   totalAttempts: number
   correctAttempts: number
-  recentResponseTimes: number[]  // last 10, outliers >10000ms removed
-  averageResponseTime: number    // EMA with alpha=0.3
-  bestResponseTime: number       // personal best (correct answers only), 0 = none yet
+  recentResponseTimes: number[]
+  averageResponseTime: number
+  bestResponseTime: number
   lastSeenAt: number
   firstSeenAt: number
   streakOnCombo: number
@@ -14,7 +15,7 @@ export interface ShapeMastery {
 
 export interface AnswerEvent {
   id: string
-  combinationId: string          // `${colShapeId}::${rowShapeId}`
+  combinationId: string
   colShapeId: string
   rowShapeId: string
   correct: boolean
@@ -26,44 +27,8 @@ export interface AnswerEvent {
     rowShapeIds: string[]
     correctCol: number
     correctRow: number
-    totalSolvedAtTime: number    // cells already solved when this card appeared
+    totalSolvedAtTime: number
   }
-}
-
-const DB_NAME = 'shapely'
-const DB_VERSION = 3
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION)
-    request.onupgradeneeded = (e) => {
-      const db = (e.target as IDBOpenDBRequest).result
-
-      // v1-v2 stores — always ensure they exist
-      if (!db.objectStoreNames.contains('custom-shapes')) {
-        db.createObjectStore('custom-shapes', { keyPath: 'id' })
-      }
-      if (!db.objectStoreNames.contains('leaderboard')) {
-        const store = db.createObjectStore('leaderboard', { keyPath: 'id' })
-        store.createIndex('by-score', 'score', { unique: false })
-      }
-
-      // v3 stores
-      if (e.oldVersion < 3) {
-        if (!db.objectStoreNames.contains('shape-mastery')) {
-          const masteryStore = db.createObjectStore('shape-mastery', { keyPath: 'combinationId' })
-          masteryStore.createIndex('by-lastSeen', 'lastSeenAt', { unique: false })
-        }
-        if (!db.objectStoreNames.contains('answer-events')) {
-          const eventsStore = db.createObjectStore('answer-events', { keyPath: 'id' })
-          eventsStore.createIndex('by-combination', 'combinationId', { unique: false })
-          eventsStore.createIndex('by-recorded-at', 'recordedAt', { unique: false })
-        }
-      }
-    }
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
 }
 
 export async function recordAnswer(
@@ -127,15 +92,10 @@ export async function recordAnswer(
   })
 }
 
-export async function getShapeMastery(
-  combinationId: string,
-): Promise<ShapeMastery | undefined> {
+export async function getShapeMastery(combinationId: string): Promise<ShapeMastery | undefined> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const store = db
-      .transaction('shape-mastery', 'readonly')
-      .objectStore('shape-mastery')
-    const req = store.get(combinationId)
+    const req = storeTx(db, 'shape-mastery', 'readonly').get(combinationId)
     req.onsuccess = () => resolve(req.result as ShapeMastery | undefined)
     req.onerror = () => reject(req.error)
   })
@@ -144,10 +104,7 @@ export async function getShapeMastery(
 export async function getAllShapeMastery(): Promise<ShapeMastery[]> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const store = db
-      .transaction('shape-mastery', 'readonly')
-      .objectStore('shape-mastery')
-    const req = store.getAll()
+    const req = storeTx(db, 'shape-mastery', 'readonly').getAll()
     req.onsuccess = () => resolve(req.result as ShapeMastery[])
     req.onerror = () => reject(req.error)
   })
@@ -159,15 +116,10 @@ export async function getAnswerEvents(
 ): Promise<AnswerEvent[]> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const store = db
-      .transaction('answer-events', 'readonly')
-      .objectStore('answer-events')
-
+    const store = storeTx(db, 'answer-events', 'readonly')
     if (combinationId !== undefined) {
       const index = store.index('by-combination')
-      const req = limit !== undefined
-        ? index.getAll(combinationId, limit)
-        : index.getAll(combinationId)
+      const req = limit !== undefined ? index.getAll(combinationId, limit) : index.getAll(combinationId)
       req.onsuccess = () => resolve(req.result as AnswerEvent[])
       req.onerror = () => reject(req.error)
     } else {
@@ -181,13 +133,9 @@ export async function getAnswerEvents(
 export async function getRecentAnswerEvents(limit: number): Promise<AnswerEvent[]> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
-    const store = db
-      .transaction('answer-events', 'readonly')
-      .objectStore('answer-events')
-    const index = store.index('by-recorded-at')
+    const index = storeTx(db, 'answer-events', 'readonly').index('by-recorded-at')
     const req = index.openCursor(null, 'prev')
     const results: AnswerEvent[] = []
-
     req.onsuccess = (e) => {
       const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result
       if (cursor && results.length < limit) {
@@ -203,4 +151,3 @@ export async function getRecentAnswerEvents(limit: number): Promise<AnswerEvent[
     }
   })
 }
-

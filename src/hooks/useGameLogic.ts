@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { useGameStore } from '@/store/gameStore'
-import { useSettingsStore } from '@/store/settingsStore'
+import { useGameSettingsStore } from '@/store/gameSettingsStore'
+import { usePlatformStore } from '@/store/platformStore'
 import { generateBoard, dealCard } from '@/utils/boardGenerator'
 import { markGameStart, markBoardReady } from '@/lib/perf'
 import { log } from '@/lib/logger'
@@ -9,7 +10,8 @@ import type { AnswerEvent } from '@/db/shapeMastery'
 
 export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition[]) {
   const store = useGameStore()
-  const settings = useSettingsStore()
+  const settings = useGameSettingsStore()
+  const platform = usePlatformStore()
 
   const startNewGame = useCallback(() => {
     markGameStart()
@@ -20,7 +22,7 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
       log.game.warn('no active shapes selected, using all shapes')
     }
     const pool = filtered.length > 0 ? filtered : allShapes
-    const favoriteIds = new Set(settings.favoriteShapeIds)
+    const favoriteIds = new Set(platform.favoriteShapeIds)
     const board = generateBoard(settings.gridSize, pool, { favoriteIds })
     const card = dealCard(board)
     const gameState = useGameStore.getState()
@@ -28,7 +30,7 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
     gameState.nextCard(card)
     markBoardReady()
     log.game.info('new game started', { gridSize: settings.gridSize, shapeCount: pool.length, gameMode: settings.gameMode })
-  }, [settings.gridSize, settings.gameMode, settings.activeShapeIds, settings.favoriteShapeIds, allShapes])
+  }, [settings.gridSize, settings.gameMode, settings.activeShapeIds, platform.favoriteShapeIds, allShapes])
 
   const submitAnswer = useCallback(
     (col: number, row: number) => {

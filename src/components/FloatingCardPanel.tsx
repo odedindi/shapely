@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { m, useMotionValue, useDragControls, animate } from 'framer-motion'
-import { useSettingsStore } from '@/store/settingsStore'
+import { usePlatformStore } from '@/store/platformStore'
 import { cn } from '@/lib/utils'
 import PlayerCard from './PlayerCard'
 import type { CardState, GamePhase, CombinationStyle } from '@/shapes/types'
@@ -20,7 +20,7 @@ export default function FloatingCardPanel({
   phase,
   combinationStyle,
 }: FloatingCardPanelProps) {
-  const { cardPanelPosition, cardPanelCollapsed, updateSetting } = useSettingsStore()
+  const { cardPanelPosition, cardPanelCollapsed, updatePlatformSetting } = usePlatformStore()
   const dragControls = useDragControls()
   
   const x = useMotionValue(0)
@@ -65,7 +65,7 @@ export default function FloatingCardPanel({
 
     animate(x, targetX, { type: 'spring', stiffness: 300, damping: 25 })
     animate(y, targetY, { type: 'spring', stiffness: 300, damping: 25, onComplete: () => {
-       updateSetting('cardPanelPosition', {
+      updatePlatformSetting('cardPanelPosition', {
         xFrac: targetX / w,
         yFrac: targetY / h
       })
@@ -108,7 +108,7 @@ export default function FloatingCardPanel({
           e.stopPropagation()
           dragControls.start(e)
         }}
-        onClick={() => updateSetting('cardPanelCollapsed', !cardPanelCollapsed)}
+        onClick={() => updatePlatformSetting('cardPanelCollapsed', !cardPanelCollapsed)}
       >
         <div className="flex flex-col gap-[3px] opacity-50">
            <div className="w-4 h-[2px] bg-current rounded-full" />

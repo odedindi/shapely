@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { useEffect, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LazyMotion, domAnimation } from 'framer-motion'
-import { useSettingsStore } from '@/store/settingsStore'
+import { usePlatformStore } from '@/store/platformStore'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 const HomeScreen = lazy(() => import('@/screens/HomeScreen'))
@@ -11,6 +11,7 @@ const ShapeEditorScreen = lazy(() => import('@/screens/ShapeEditorScreen'))
 const SettingsScreen = lazy(() => import('@/screens/SettingsScreen'))
 const LeaderboardScreen = lazy(() => import('@/screens/LeaderboardScreen'))
 const ProgressScreen = lazy(() => import('@/screens/ProgressScreen'))
+const ReplayScreen = lazy(() => import('@/screens/ReplayScreen'))
 
 const RTL_LANGUAGES = new Set(['he', 'ar'])
 
@@ -21,12 +22,11 @@ const router = createBrowserRouter([
   { path: '/shape-editor', element: <ShapeEditorScreen /> },
   { path: '/leaderboard', element: <LeaderboardScreen /> },
   { path: '/progress', element: <ProgressScreen /> },
+  { path: '/replay/:id', element: <ReplayScreen /> },
 ])
 
 export default function App() {
-  const theme = useSettingsStore((s) => s.theme)
-  const darkMode = useSettingsStore((s) => s.darkMode)
-  const language = useSettingsStore((s) => s.language)
+  const { theme, darkMode, language } = usePlatformStore()
   const { i18n } = useTranslation()
 
   const isRTL = RTL_LANGUAGES.has(language)

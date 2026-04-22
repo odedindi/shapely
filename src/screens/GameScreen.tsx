@@ -5,7 +5,8 @@ import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensor
 import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { m, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
-import { useSettingsStore } from '@/store/settingsStore'
+import { useGameSettingsStore } from '@/store/gameSettingsStore'
+import { usePlatformStore } from '@/store/platformStore'
 import { useShapeRegistry } from '@/hooks/useShapeRegistry'
 import { useGameLogic } from '@/hooks/useGameLogic'
 import GameBoard from '@/components/GameBoard'
@@ -16,14 +17,15 @@ import LevelUpOverlay from '@/components/LevelUpOverlay'
 import VictoryScreen from '@/screens/VictoryScreen'
 import { Sparkles } from '@/components/magic/Sparkles'
 import { log } from '@/lib/logger'
-import { saveLeaderboardEntry, getTopN, type LeaderboardEntry } from '@/db/leaderboard'
+import { saveLeaderboardEntry, getLeaderboardEntries, type LeaderboardEntry } from '@/db/leaderboard'
 
 export default function GameScreen() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { allShapes } = useShapeRegistry()
   const store = useGameStore()
-  const settings = useSettingsStore()
+  const settings = useGameSettingsStore()
+  const platform = usePlatformStore()
   const [selectedCell, setSelectedCell] = useState<{ col: number; row: number } | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [cardSelected, setCardSelected] = useState(false)
@@ -108,7 +110,7 @@ export default function GameScreen() {
         setVictoryStats({ isNewRecord, previousBest: prevBest })
         settings.updateBestScore(bestKey, store.score)
         
-        getTopN(5, { gridSize: settings.gridSize, gameMode: store.gameMode }).then((top) => {
+        getLeaderboardEntries({ gridSize: settings.gridSize, gameMode: store.gameMode }, 5).then((top) => {
           setTopEntries(top)
         })
       }
@@ -214,6 +216,8 @@ export default function GameScreen() {
     const handleSaveRecord = (name: string) => {
       saveLeaderboardEntry({
         id: crypto.randomUUID(),
+        profileId: platform.activeProfileId ?? '',
+        emoji: '🎮',
         name,
         score: store.score,
         timeElapsed: store.timeElapsed,
@@ -223,7 +227,7 @@ export default function GameScreen() {
         gameMode: store.gameMode,
         recordedAt: Date.now()
       }).then(() => {
-        getTopN(5, { gridSize: settings.gridSize, gameMode: store.gameMode }).then((top) => {
+        getLeaderboardEntries({ gridSize: settings.gridSize, gameMode: store.gameMode }, 5).then((top) => {
           setTopEntries(top)
         })
       })

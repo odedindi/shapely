@@ -3,8 +3,10 @@ import type { BoardState, CardState, Difficulty, GamePhase, GameMode } from '@/s
 import { log } from '@/lib/logger'
 import { dealUniqueCard, dealWeightedCard } from '@/utils/boardGenerator'
 import { stepDifficulty } from '@/utils/difficultyEngine'
-import { useSettingsStore } from '@/store/settingsStore'
+import { useGameSettingsStore } from '@/store/gameSettingsStore'
 import { triggerConfetti } from '@/components/magic/Confetti'
+import { saveReplay, type ReplayEvent } from '@/db/replays'
+import { usePlatformStore } from '@/store/platformStore'
 
 function vibrate(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
@@ -27,6 +29,7 @@ export interface GameState {
   solvedCells: Set<string>
   gameMode: GameMode
   cardAppearedAt: number
+  currentReplayEvents: ReplayEvent[]
   startGame: (board: BoardState, gameMode?: GameMode) => void
   submitAnswer: (col: number, row: number) => void
   nextCard: (card: CardState) => void
@@ -52,6 +55,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
   solvedCells: new Set<string>(),
   gameMode: 'unique',
   cardAppearedAt: 0,
+  currentReplayEvents: [],
 
   startGame: (board, gameMode = 'unique') =>
     set({
@@ -65,10 +69,11 @@ export const useGameStore = create<GameState>()((set, get) => ({
       correctAnswers: 0,
       solvedCells: new Set<string>(),
       gameMode,
+      currentReplayEvents: [{ type: 'startGame', board, gameMode, ts: Date.now() }],
     }),
 
   submitAnswer: (col, row) => {
-    const { currentCard, phase, score, streak, bestStreak, totalAnswers, correctAnswers, board } = get()
+    const { currentCard, phase, score, streak, bestStreak, totalAnswers, correctAnswers, board, currentReplayEvents } = get()
     if (!currentCard || phase !== 'playing') return
     const correct =
       currentCard.correctCell.col === col && currentCard.correctCell.row === row
@@ -76,6 +81,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const newStreak = correct ? streak + 1 : 0
     const newBestStreak = Math.max(bestStreak, newStreak)
     log.game.info('answer submitted', { col, row, correct, streak, score })
+    const replayEvent: ReplayEvent = { type: 'submitAnswer', col, row, ts: Date.now() }
 
     if (correct) {
       const key = `${col}-${row}`
@@ -83,6 +89,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
       newSolvedCells.add(key)
       const gridSize = board?.gridSize ?? 0
       const boardComplete = newSolvedCells.size >= gridSize * gridSize
+      const updatedEvents = [...currentReplayEvents, replayEvent]
       set({
         phase: boardComplete ? 'complete' : newPhase,
         score: score + 10 + streak,
@@ -91,18 +98,32 @@ export const useGameStore = create<GameState>()((set, get) => ({
         totalAnswers: totalAnswers + 1,
         correctAnswers: correctAnswers + 1,
         solvedCells: newSolvedCells,
+        currentReplayEvents: updatedEvents,
       })
       if (boardComplete) {
         log.game.info('board complete', { solvedCells: newSolvedCells.size, gridSize })
         vibrate(50)
         triggerConfetti()
+        const finalState = get()
+        const profileId = usePlatformStore.getState().activeProfileId ?? ''
+        saveReplay({
+          id: crypto.randomUUID(),
+          profileId,
+          events: updatedEvents,
+          gridSize,
+          score: finalState.score,
+          correctAnswers: finalState.correctAnswers,
+          totalAnswers: finalState.totalAnswers,
+          timeElapsed: finalState.timeElapsed,
+          recordedAt: Date.now(),
+        }).catch((err: unknown) => log.game.error('failed to save replay', err))
         return
       }
       vibrate(50)
       triggerConfetti()
       setTimeout(() => {
         const s = get()
-        const settings = useSettingsStore.getState()
+        const settings = useGameSettingsStore.getState()
         log.game.info('correct timeout fired', { phase: s.phase, board: !!s.board, card: !!s.currentCard })
         if (!s.board || s.phase !== 'correct') {
           if (s.phase !== 'correct') log.game.warn('correct timeout: phase not correct, bailing', { phase: s.phase })
@@ -111,7 +132,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
         if (settings.adaptiveDifficulty) {
           const prevRevealMode = settings.cellRevealMode
           stepDifficulty(s.streak, settings)
-          const nextRevealMode = useSettingsStore.getState().cellRevealMode
+          const nextRevealMode = useGameSettingsStore.getState().cellRevealMode
           if (nextRevealMode !== prevRevealMode) {
             log.game.info('level up triggered', { from: prevRevealMode, to: nextRevealMode })
             get().triggerLevelUp()
@@ -135,6 +156,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
         streak: newStreak,
         bestStreak: newBestStreak,
         totalAnswers: totalAnswers + 1,
+        currentReplayEvents: [...currentReplayEvents, replayEvent],
       })
       vibrate([30, 50, 30])
       setTimeout(() => {
@@ -149,7 +171,12 @@ export const useGameStore = create<GameState>()((set, get) => ({
     }
   },
 
-  nextCard: (card) => set({ currentCard: card, phase: 'playing', cardAppearedAt: performance.now() }),
+  nextCard: (card) => set((s) => ({
+    currentCard: card,
+    phase: 'playing',
+    cardAppearedAt: performance.now(),
+    currentReplayEvents: [...s.currentReplayEvents, { type: 'nextCard', card, ts: Date.now() }],
+  })),
 
   tickTimer: () => set((s) => ({ timeElapsed: s.timeElapsed + 1 })),
 
@@ -167,6 +194,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
       correctAnswers: 0,
       solvedCells: new Set<string>(),
       cardAppearedAt: 0,
+      currentReplayEvents: [],
     })
   },
 
