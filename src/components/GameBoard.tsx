@@ -40,9 +40,10 @@ export default function GameBoard({
     : 400
   const headerColWidth = 44
   const padding = 16
-  const gaps = gridSize * 8
+  const layoutGridSize = Math.max(gridSize, 3)
+  const gaps = layoutGridSize * 8
   
-  const computedCellSize = Math.floor((containerDimension - headerColWidth - padding * 2 - gaps) / gridSize)
+  const computedCellSize = Math.floor((containerDimension - headerColWidth - padding * 2 - gaps) / layoutGridSize)
   const cellSize = Math.max(44, Math.min(110, computedCellSize))
   const isPanMode = computedCellSize < 44
 

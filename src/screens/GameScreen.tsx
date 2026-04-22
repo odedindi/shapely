@@ -135,6 +135,7 @@ export default function GameScreen() {
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false)
     setActiveCellId(null)
+    if (store.phase !== 'playing') return
     const overId = event.over?.id
     if (typeof overId === 'string' && overId.startsWith('cell-')) {
       const parts = overId.split('-')
@@ -158,6 +159,7 @@ export default function GameScreen() {
 
   function handleCellSelect(col: number, row: number) {
     if (store.phase !== 'playing') return
+    if (!cardSelected) return
     setSelectedCell({ col, row })
     submitAnswer(col, row)
     

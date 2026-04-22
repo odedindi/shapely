@@ -58,8 +58,8 @@ export const useGameStore = create<GameState>()((set, get) => ({
     }),
 
   submitAnswer: (col, row) => {
-    const { currentCard, score, streak, bestStreak, totalAnswers, correctAnswers, board } = get()
-    if (!currentCard) return
+    const { currentCard, phase, score, streak, bestStreak, totalAnswers, correctAnswers, board } = get()
+    if (!currentCard || phase !== 'playing') return
     const correct =
       currentCard.correctCell.col === col && currentCard.correctCell.row === row
     const newPhase: GamePhase = correct ? 'correct' : 'wrong'
