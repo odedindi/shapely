@@ -35,6 +35,8 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
 
   const submitAnswer = useCallback(
     (col: number, row: number) => {
+      if (useGameStore.getState().phase !== 'playing') return
+
       const capturedCard = store.currentCard
       const capturedBoard = store.board
       const capturedSolvedCount = store.solvedCells.size
@@ -80,6 +82,7 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
           const freshSettings = useSettingsStore.getState()
           if (!freshStore.board) return
           if (freshStore.phase === 'complete') return
+          if (freshStore.phase !== 'correct') return
           if (freshSettings.adaptiveDifficulty) {
             const prevRevealMode = freshSettings.cellRevealMode
             stepDifficulty(freshStore.streak, freshSettings)
@@ -103,6 +106,7 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
         log.game.warn('wrong answer', { col, row, correctCol: store.currentCard?.correctCell.col, correctRow: store.currentCard?.correctCell.row })
         setTimeout(() => {
           const freshStore = useGameStore.getState()
+          if (freshStore.phase !== 'wrong') return
           if (freshStore.currentCard) freshStore.nextCard(freshStore.currentCard)
         }, 600)
       }
