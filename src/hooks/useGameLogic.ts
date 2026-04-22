@@ -16,10 +16,10 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
     const filtered = settings.activeShapeIds === 'all'
       ? allShapes
       : allShapes.filter(s => (settings.activeShapeIds as string[]).includes(s.id))
-    const pool = filtered.length >= settings.gridSize * 2 ? filtered : allShapes
-    if (filtered.length < settings.gridSize * 2 && settings.activeShapeIds !== 'all') {
-      log.game.warn('active shape pool too small, falling back to all shapes', { active: filtered.length, required: settings.gridSize * 2 })
+    if (filtered.length === 0) {
+      log.game.warn('no active shapes selected, using all shapes')
     }
+    const pool = filtered.length > 0 ? filtered : allShapes
     const favoriteIds = new Set(settings.favoriteShapeIds)
     const board = generateBoard(settings.gridSize, pool, { favoriteIds })
     const card = dealCard(board)

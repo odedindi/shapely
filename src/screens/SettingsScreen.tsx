@@ -28,7 +28,7 @@ export default function SettingsScreen() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-lg mx-auto">
-          <SettingsPanel availableShapeCount={allShapes.length} />
+          <SettingsPanel availableShapeCount={allShapes.length} allShapes={allShapes} />
         </div>
       </div>
     </div>
