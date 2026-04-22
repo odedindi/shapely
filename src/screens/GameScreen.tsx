@@ -142,25 +142,26 @@ export default function GameScreen() {
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false)
     setActiveCellId(null)
-    setCardSelected(false)
-    if (store.phase !== 'playing') return
     if (settings.interactionMode === 'tap') return
     const overId = event.over?.id
-    if (typeof overId === 'string' && overId.startsWith('cell-')) {
-      const parts = overId.split('-')
+    const droppedOnCell = typeof overId === 'string' && overId.startsWith('cell-')
+    if (droppedOnCell) {
+      setCardSelected(false)
+    }
+    if (store.phase !== 'playing') return
+    if (droppedOnCell) {
+      const parts = (overId as string).split('-')
       const col = parseInt(parts[1], 10)
       const row = parseInt(parts[2], 10)
       if (!isNaN(col) && !isNaN(row)) {
         submitAnswer(col, row)
         setSelectedCell({ col, row })
-        
-        const currentCard = store.currentCard
+        const currentCard = useGameStore.getState().currentCard
         if (currentCard && (currentCard.correctCell.col !== col || currentCard.correctCell.row !== row)) {
           const quad = computeHintQuadrant(currentCard.correctCell.col, currentCard.correctCell.row)
           setHintQuadrant(quad)
           setTimeout(() => setHintQuadrant(null), 1200)
         }
-        
         setTimeout(() => setSelectedCell(null), 900)
       }
     }
@@ -172,14 +173,12 @@ export default function GameScreen() {
     if (!cardSelected) return
     setSelectedCell({ col, row })
     submitAnswer(col, row)
-    
-    const currentCard = store.currentCard
+    const currentCard = useGameStore.getState().currentCard
     if (currentCard && (currentCard.correctCell.col !== col || currentCard.correctCell.row !== row)) {
       const quad = computeHintQuadrant(currentCard.correctCell.col, currentCard.correctCell.row)
       setHintQuadrant(quad)
       setTimeout(() => setHintQuadrant(null), 1200)
     }
-    
     setCardSelected(false)
     setTimeout(() => setSelectedCell(null), 900)
   }
