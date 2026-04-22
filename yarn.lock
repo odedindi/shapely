@@ -1313,7 +1313,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/lint@npm:^6.0.0":
+"@codemirror/lint@npm:^6.0.0, @codemirror/lint@npm:^6.9.5":
   version: 6.9.5
   resolution: "@codemirror/lint@npm:6.9.5"
   dependencies:
@@ -5719,6 +5719,7 @@ __metadata:
   dependencies:
     "@codemirror/basic-setup": "npm:^0.20.0"
     "@codemirror/lang-xml": "npm:^6.1.0"
+    "@codemirror/lint": "npm:^6.9.5"
     "@codemirror/state": "npm:^6.6.0"
     "@codemirror/theme-one-dark": "npm:^6.1.3"
     "@codemirror/view": "npm:^6.41.1"
@@ -5756,6 +5757,8 @@ __metadata:
     react-dom: "npm:^19.2.5"
     react-i18next: "npm:^17.0.4"
     react-router: "npm:^7.14.1"
+    svg-element-attributes: "npm:^2.1.0"
+    svg-tag-names: "npm:^3.0.1"
     tailwind-merge: "npm:^3.5.0"
     tailwindcss: "npm:^4.2.2"
     typescript: "npm:^6.0.3"
@@ -6061,6 +6064,20 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 10c0/6c4032340701a9950865f7ae8ef38578d8d7053f5e10518076e6554a9381fa91bd9c6850193695c141f32b21f979c985db07265a758867bac95de05f7d8aeb39
+  languageName: node
+  linkType: hard
+
+"svg-element-attributes@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "svg-element-attributes@npm:2.1.0"
+  checksum: 10c0/929dbdb99c1cf50d4cb606935edede42c939a962927da6dc90f7df775ea55e8aff0eb5a7f188098aa8786bc734e9ac9b71616b4f3c99b60b6eba96e71b73b15b
+  languageName: node
+  linkType: hard
+
+"svg-tag-names@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "svg-tag-names@npm:3.0.1"
+  checksum: 10c0/e38588c52aaf26b04f88fcdc1169ed382dbb5789ab3eb788607095d69dbdc43c8e0acf4f9de4441d356c6ec72915aa4b770ddd5dd304cb1f4b23f273c360be0c
   languageName: node
   linkType: hard
 
