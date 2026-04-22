@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
 import { useGameStore } from '@/store/gameStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { makeShape } from '@/shapes/makeShape'
 import type { BoardState, CardState } from '@/shapes/types'
+import { useGameLogic } from './useGameLogic'
 
 vi.mock('@/hooks/useHaptics', () => ({
   useHaptics: () => ({ correct: vi.fn(), wrong: vi.fn() }),
@@ -186,5 +188,45 @@ describe('interactionMode guard in handleCellSelect logic', () => {
     const gameStore = useGameStore.getState()
     gameStore.submitAnswer(card.correctCell.col, card.correctCell.row)
     expect(useGameStore.getState().phase).toBe('correct')
+  })
+})
+
+describe('stale-closure regression: submitAnswer reads live state', () => {
+  it('a stale submitAnswer reference evaluates against the current card, not a snapshot from render time', async () => {
+    const allShapes = Array.from({ length: 9 }, (_, i) => makeTestShape(`s-${i}`))
+    const { result } = renderHook(() => useGameLogic(allShapes))
+
+    // Capture submitAnswer reference from the first render
+    const staleSubmitAnswer = result.current.submitAnswer
+
+    // Start a game and set card A at (1,1)
+    const board = makeTestBoard(3)
+    const cardA = makeTestCard(board, 1, 1)
+    act(() => {
+      useGameStore.getState().startGame(board, 'unique')
+      useGameStore.getState().nextCard(cardA)
+    })
+
+    // Advance the store: replace current card with card B at (2,2)
+    const cardB = makeTestCard(board, 2, 2)
+    act(() => {
+      // Simulate the store moving to the next card without going through submitAnswer
+      useGameStore.getState().nextCard(cardB)
+    })
+    expect(useGameStore.getState().currentCard?.correctCell).toEqual({ col: 2, row: 2 })
+
+    // Call the stale reference with card B's correct answer
+    act(() => {
+      staleSubmitAnswer(2, 2)
+    })
+
+    // With the fix, submitAnswer reads getState() at call time → evaluates card B → correct
+    expect(useGameStore.getState().phase).toBe('correct')
+
+    // Advance timers so setTimeout fires → phase returns to playing
+    act(() => {
+      vi.advanceTimersByTime(900)
+    })
+    expect(useGameStore.getState().phase).toBe('playing')
   })
 })
