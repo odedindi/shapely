@@ -17,7 +17,7 @@ export default function HomeScreen() {
   const { t } = useTranslation()
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[var(--color-surface)] px-4">
+    <div className="relative min-h-screen max-w-2xl mx-auto flex flex-col items-center justify-center overflow-hidden bg-[var(--color-surface)] px-4">
       {FLOATING_SHAPES.map((shape, i) => {
         const size = 48 + (i % 3) * 24
         const xPos = 5 + (i * 16) % 90
