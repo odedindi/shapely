@@ -4,6 +4,13 @@ import { log } from '@/lib/logger'
 import { dealUniqueCard, dealWeightedCard } from '@/utils/boardGenerator'
 import { stepDifficulty } from '@/utils/difficultyEngine'
 import { useSettingsStore } from '@/store/settingsStore'
+import { triggerConfetti } from '@/components/magic/Confetti'
+
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(pattern)
+  }
+}
 
 export interface GameState {
   board: BoardState | null
@@ -87,8 +94,12 @@ export const useGameStore = create<GameState>()((set, get) => ({
       })
       if (boardComplete) {
         log.game.info('board complete', { solvedCells: newSolvedCells.size, gridSize })
+        vibrate(50)
+        triggerConfetti()
         return
       }
+      vibrate(50)
+      triggerConfetti()
       setTimeout(() => {
         const s = get()
         const settings = useSettingsStore.getState()
@@ -125,6 +136,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
         bestStreak: newBestStreak,
         totalAnswers: totalAnswers + 1,
       })
+      vibrate([30, 50, 30])
       setTimeout(() => {
         const s = get()
         log.game.info('wrong timeout fired', { phase: s.phase, card: !!s.currentCard })

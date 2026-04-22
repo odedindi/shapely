@@ -2,8 +2,6 @@ import { useEffect, useCallback } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { generateBoard, dealCard } from '@/utils/boardGenerator'
-import { useHaptics } from './useHaptics'
-import { triggerConfetti } from '@/components/magic/Confetti'
 import { markGameStart, markBoardReady } from '@/lib/perf'
 import { log } from '@/lib/logger'
 import { recordAnswer } from '@/db/shapeMastery'
@@ -12,7 +10,6 @@ import type { AnswerEvent } from '@/db/shapeMastery'
 export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition[]) {
   const store = useGameStore()
   const settings = useSettingsStore()
-  const haptics = useHaptics()
 
   const startNewGame = useCallback(() => {
     markGameStart()
@@ -71,15 +68,12 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
       }
 
       if (correct) {
-        haptics.correct()
-        triggerConfetti()
         log.game.info('correct answer', { col, row, score: state.score + 1, streak: state.streak + 1 })
       } else {
-        haptics.wrong()
         log.game.warn('wrong answer', { col, row, correctCol: capturedCard.correctCell.col, correctRow: capturedCard.correctCell.row })
       }
     },
-    [haptics]
+    []
   )
 
   useEffect(() => {
