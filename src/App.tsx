@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LazyMotion, domAnimation } from 'framer-motion'
 import { useSettingsStore } from '@/store/settingsStore'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 const HomeScreen = lazy(() => import('@/screens/HomeScreen'))
 const GameScreen = lazy(() => import('@/screens/GameScreen'))
@@ -46,11 +47,13 @@ export default function App() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-content)] font-nunito">
-        <Suspense fallback={null}>
-          <RouterProvider router={router} />
-        </Suspense>
-      </div>
+      <ErrorBoundary>
+        <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-content)] font-nunito">
+          <Suspense fallback={null}>
+            <RouterProvider router={router} />
+          </Suspense>
+        </div>
+      </ErrorBoundary>
     </LazyMotion>
   )
 }
