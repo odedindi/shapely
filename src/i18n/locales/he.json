@@ -4,10 +4,8 @@
   "home.play": "שחק",
   "home.settings": "הגדרות",
   "home.shapeEditor": "עורך צורות",
-
   "nav.back": "חזור",
   "nav.home": "בית",
-
   "game.score": "ניקוד",
   "game.streak": "רצף",
   "game.card": "קלף שחקן",
@@ -17,7 +15,6 @@
   "game.correct": "נכון!",
   "game.wrong": "נסה שוב",
   "game.complete": "כל הכבוד!",
-
   "settings.title": "הגדרות",
   "settings.theme": "ערכת נושא",
   "settings.mode": "מצב",
@@ -37,7 +34,6 @@
   "settings.reveal.visible": "גלוי",
   "settings.reveal.hidden": "מוסתר",
   "settings.reveal.peek": "הצצה",
-
   "editor.title": "עורך צורות",
   "editor.library": "הצורות שלי",
   "editor.newShape": "צורה חדשה",
@@ -57,5 +53,27 @@
   "editor.loading": "טוען…",
   "editor.nameRequired": "שם נדרש",
   "editor.svgRequired": "תוכן SVG נדרש",
-  "editor.saveFailed": "שמירת הצורה נכשלה"
+  "editor.saveFailed": "שמירת הצורה נכשלה",
+  "progress.title": "התקדמות",
+  "progress.combosSeen": "שילובים שנראו",
+  "progress.avgTime": "זמן ממוצע",
+  "progress.accuracy": "דיוק",
+  "progress.loading": "טוען...",
+  "progress.noData": "שחק כמה משחקים כדי לראות את מפת השליטה שלך!",
+  "progress.bestTime": "זמן שיא",
+  "progress.currentStreak": "רצף נוכחי",
+  "progress.recentReplays": "הילוכים חוזרים אחרונים",
+  "progress.noReplays": "אין עדיין הילוכים חוזרים. שחק משחק כדי להקליט אחד!",
+  "progress.playReplay": "הפעל",
+  "progress.compareProfiles": "השוואת פרופילים",
+  "progress.selectProfile": "בחר פרופיל...",
+  "progress.addAnotherProfile": "הוסף פרופיל נוסף להשוואה",
+  "progress.stats.totalGames": "סה״כ משחקים",
+  "progress.stats.bestScore": "ציון שיא",
+  "progress.stats.bestStreak": "רצף שיא",
+  "progress.stats.avgAccuracy": "דיוק ממוצע",
+  "progress.vs": "נגד",
+  "progress.gridSize": "גודל רשת",
+  "progress.score": "ציון",
+  "progress.date": "תאריך"
 }

@@ -4,10 +4,8 @@
   "home.play": "Play",
   "home.settings": "Settings",
   "home.shapeEditor": "Shape Editor",
-
   "nav.back": "Back",
   "nav.home": "Home",
-
   "game.score": "Score",
   "game.streak": "Streak",
   "game.card": "Player card",
@@ -19,7 +17,6 @@
   "game.complete": "Well done!",
   "game.levelUp": "Level Up!",
   "game.levelUpSubtitle": "Game is getting harder!",
-
   "victory.title": "Well done!",
   "victory.score": "Score",
   "victory.time": "Time",
@@ -28,7 +25,6 @@
   "victory.share": "Share Result",
   "victory.playAgain": "Play Again",
   "victory.home": "Home",
-
   "settings.title": "Settings",
   "settings.theme": "Theme",
   "settings.mode": "Mode",
@@ -48,28 +44,22 @@
   "settings.reveal.visible": "Visible",
   "settings.reveal.hidden": "Hidden",
   "settings.reveal.peek": "Peek",
-
   "settings.theme.default": "Default",
   "settings.theme.sunset": "Sunset",
   "settings.theme.forest": "Forest",
   "settings.theme.ocean": "Ocean",
   "settings.theme.candy": "Candy",
   "settings.theme.monochrome": "Mono",
-
   "settings.gameMode": "Game Mode",
   "settings.unique": "Unique",
   "settings.weighted": "Weighted",
-
   "settings.interaction_drag": "Drag",
   "settings.interaction_tap": "Tap",
   "settings.interaction_both": "Both",
-
   "settings.gridSizeUnavailable": "Not enough shapes for this grid size",
-
   "settings.shapes": "Shapes",
   "settings.shapesSelectAll": "All",
   "settings.shapesClear": "Clear",
-
   "editor.title": "Shape Editor",
   "editor.library": "My Shapes",
   "editor.newShape": "New Shape",
@@ -97,7 +87,6 @@
   "editor.strokeColor": "Stroke Color",
   "editor.opacity": "Opacity",
   "editor.preview4": "Preview Modes",
-
   "leaderboard.title": "Leaderboard",
   "leaderboard.empty": "No scores yet. Play a game!",
   "leaderboard.clearBoard": "Clear Board",
@@ -113,5 +102,27 @@
   "leaderboard.score": "Score",
   "leaderboard.time": "Time",
   "leaderboard.accuracy": "Accuracy",
-  "leaderboard.streak": "Streak"
+  "leaderboard.streak": "Streak",
+  "progress.title": "Progress",
+  "progress.combosSeen": "Combos Seen",
+  "progress.avgTime": "Avg Time",
+  "progress.accuracy": "Accuracy",
+  "progress.loading": "Loading...",
+  "progress.noData": "Play some games to see your mastery heatmap!",
+  "progress.bestTime": "Best Time",
+  "progress.currentStreak": "Current Streak",
+  "progress.recentReplays": "Recent Replays",
+  "progress.noReplays": "No replays yet. Play a game to record one!",
+  "progress.playReplay": "Play",
+  "progress.compareProfiles": "Compare Profiles",
+  "progress.selectProfile": "Select profile...",
+  "progress.addAnotherProfile": "Add another profile to compare",
+  "progress.stats.totalGames": "Total Games",
+  "progress.stats.bestScore": "Best Score",
+  "progress.stats.bestStreak": "Best Streak",
+  "progress.stats.avgAccuracy": "Avg Accuracy",
+  "progress.vs": "vs",
+  "progress.gridSize": "Grid Size",
+  "progress.score": "Score",
+  "progress.date": "Date"
 }
