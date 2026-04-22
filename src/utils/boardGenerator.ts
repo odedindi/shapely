@@ -10,17 +10,33 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export function generateBoard(gridSize: number, shapes: ShapeDefinition[]): BoardState {
+export function generateBoard(gridSize: number, shapes: ShapeDefinition[], options?: { favoriteIds?: Set<string> }): BoardState {
   if (shapes.length < gridSize * 2) {
     const msg = `Need at least ${gridSize * 2} shapes for a ${gridSize}×${gridSize} board`
     log.board.error('generateBoard failed', { gridSize, shapeCount: shapes.length, required: gridSize * 2 })
     throw new Error(msg)
   }
-  const shuffled = shuffle(shapes)
+  const pool = [...shapes]
+  if (options?.favoriteIds && options.favoriteIds.size > 0) {
+    for (const shape of shapes) {
+      if (options.favoriteIds.has(shape.id)) {
+        pool.push(shape, shape)
+      }
+    }
+  }
+  const shuffled = shuffle(pool)
+  const seen = new Set<string>()
+  const deduped: ShapeDefinition[] = []
+  for (const shape of shuffled) {
+    if (!seen.has(shape.id)) {
+      seen.add(shape.id)
+      deduped.push(shape)
+    }
+  }
   const board: BoardState = {
     gridSize,
-    columnShapes: shuffled.slice(0, gridSize),
-    rowShapes: shuffled.slice(gridSize, gridSize * 2),
+    columnShapes: deduped.slice(0, gridSize),
+    rowShapes: deduped.slice(gridSize, gridSize * 2),
   }
   log.board.info('board generated', { gridSize, shapeCount: shapes.length })
   return board
@@ -78,7 +94,6 @@ export function dealWeightedCard(board: BoardState, solvedCells: Set<string>): C
       }
     }
   }
-  // Fallback to last candidate (floating-point safety)
   const last = candidates[candidates.length - 1]
   return {
     columnShape: board.columnShapes[last.col],

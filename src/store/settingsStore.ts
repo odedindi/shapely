@@ -14,6 +14,10 @@ export interface SettingsState {
   language: string
   shapeEditorEnabled: boolean
   gameMode: GameMode
+  cardPanelPosition: { xFrac: number; yFrac: number }
+  cardPanelCollapsed: boolean
+  activeShapeIds: string[] | 'all'
+  favoriteShapeIds: string[]
   bestScores: Record<string, number>
   updateSetting: <K extends keyof Omit<SettingsState, 'updateSetting' | 'updateBestScore'>>(
     key: K,
@@ -35,6 +39,10 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'en',
       shapeEditorEnabled: false,
       gameMode: 'unique',
+      cardPanelPosition: { xFrac: 1, yFrac: 1 },
+      cardPanelCollapsed: false,
+      activeShapeIds: 'all' as const,
+      favoriteShapeIds: [],
       bestScores: {},
       updateSetting: (key, value) =>
         set((s) => {
@@ -54,7 +62,13 @@ export const useSettingsStore = create<SettingsState>()(
     { name: 'shapely-settings', merge: (persisted, current) => {
       const p = persisted as Partial<SettingsState>
       const clampedGridSize = Math.min(p.gridSize ?? current.gridSize, 7) as SettingsState['gridSize']
-      return { ...current, ...p, gridSize: clampedGridSize }
+      return {
+        ...current,
+        ...p,
+        gridSize: clampedGridSize,
+        activeShapeIds: p.activeShapeIds ?? 'all',
+        favoriteShapeIds: p.favoriteShapeIds ?? [],
+      }
     } }
   )
 )
