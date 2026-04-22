@@ -73,6 +73,10 @@ export default function GameScreen() {
   }, [allShapes.length, store.phase, startNewGame])
 
   useEffect(() => {
+    setCardSelected(false)
+  }, [store.phase])
+
+  useEffect(() => {
     if (store.levelUpPulse > 0 && store.levelUpPulse !== prevLevelUpPulseRef.current) {
       prevLevelUpPulseRef.current = store.levelUpPulse
       setShowLevelUp(true)
@@ -138,6 +142,7 @@ export default function GameScreen() {
   function handleDragEnd(event: DragEndEvent) {
     setIsDragging(false)
     setActiveCellId(null)
+    setCardSelected(false)
     if (store.phase !== 'playing') return
     if (settings.interactionMode === 'tap') return
     const overId = event.over?.id
