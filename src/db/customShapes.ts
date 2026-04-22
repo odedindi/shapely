@@ -2,7 +2,7 @@ import type { CustomShapeRecord } from '@/shapes/types'
 import { log } from '@/lib/logger'
 
 const DB_NAME = 'shapely'
-const DB_VERSION = 2
+const DB_VERSION = 3
 const STORE_NAME = 'custom-shapes'
 const SEED_KEY = 'shapely-seeded-v1'
 
@@ -64,6 +64,17 @@ function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('leaderboard')) {
         const store = db.createObjectStore('leaderboard', { keyPath: 'id' })
         store.createIndex('by-score', 'score', { unique: false })
+      }
+      if (e.oldVersion < 3) {
+        if (!db.objectStoreNames.contains('shape-mastery')) {
+          const masteryStore = db.createObjectStore('shape-mastery', { keyPath: 'combinationId' })
+          masteryStore.createIndex('by-lastSeen', 'lastSeenAt', { unique: false })
+        }
+        if (!db.objectStoreNames.contains('answer-events')) {
+          const eventsStore = db.createObjectStore('answer-events', { keyPath: 'id' })
+          eventsStore.createIndex('by-combination', 'combinationId', { unique: false })
+          eventsStore.createIndex('by-recorded-at', 'recordedAt', { unique: false })
+        }
       }
     }
     request.onsuccess = () => resolve(request.result)
