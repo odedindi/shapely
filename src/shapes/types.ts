@@ -16,6 +16,7 @@ export type Theme = 'default' | 'sunset' | 'forest' | 'ocean' | 'candy' | 'monoc
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type GamePhase = 'idle' | 'playing' | 'correct' | 'wrong' | 'complete'
 export type GameMode = 'unique' | 'weighted'
+export type InteractionMode = 'drag' | 'tap' | 'both'
 
 export interface ShapeDefinition {
   id: string

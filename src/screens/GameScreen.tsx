@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core'
 import { m, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
@@ -43,7 +43,8 @@ export default function GameScreen() {
   const { startNewGame, submitAnswer } = useGameLogic(allShapes)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
   )
 
   useEffect(() => {
@@ -136,6 +137,7 @@ export default function GameScreen() {
     setIsDragging(false)
     setActiveCellId(null)
     if (store.phase !== 'playing') return
+    if (settings.interactionMode === 'tap') return
     const overId = event.over?.id
     if (typeof overId === 'string' && overId.startsWith('cell-')) {
       const parts = overId.split('-')
@@ -159,6 +161,7 @@ export default function GameScreen() {
 
   function handleCellSelect(col: number, row: number) {
     if (store.phase !== 'playing') return
+    if (settings.interactionMode === 'drag') return
     if (!cardSelected) return
     setSelectedCell({ col, row })
     submitAnswer(col, row)

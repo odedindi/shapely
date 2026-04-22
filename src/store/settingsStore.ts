@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CombinationStyle, CellRevealMode, DarkMode, Theme, GameMode } from '@/shapes/types'
+import type { CombinationStyle, CellRevealMode, DarkMode, Theme, GameMode, InteractionMode } from '@/shapes/types'
 import { log } from '@/lib/logger'
 
 export interface SettingsState {
@@ -14,6 +14,7 @@ export interface SettingsState {
   language: string
   shapeEditorEnabled: boolean
   gameMode: GameMode
+  interactionMode: InteractionMode
   cardPanelPosition: { xFrac: number; yFrac: number }
   cardPanelCollapsed: boolean
   activeShapeIds: string[] | 'all'
@@ -39,6 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
       language: 'en',
       shapeEditorEnabled: false,
       gameMode: 'unique',
+      interactionMode: 'both' as InteractionMode,
       cardPanelPosition: { xFrac: 1, yFrac: 1 },
       cardPanelCollapsed: false,
       activeShapeIds: 'all' as const,

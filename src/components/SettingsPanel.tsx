@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/store/settingsStore'
-import type { Theme, DarkMode, CombinationStyle, CellRevealMode, GameMode } from '@/shapes/types'
+import type { Theme, DarkMode, CombinationStyle, CellRevealMode, GameMode, InteractionMode } from '@/shapes/types'
 
 const THEMES: { value: Theme; label: string; color: string }[] = [
   { value: 'default', label: 'Default', color: '#6366f1' },
@@ -162,6 +162,23 @@ export default function SettingsPanel({ availableShapeCount = Infinity }: Settin
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${settings.cellRevealMode === mode ? 'bg-[var(--color-primary)] text-[var(--color-primary-fg)] border-[var(--color-primary)]' : 'bg-[var(--color-surface-raised)] text-[var(--color-content)] border-[var(--color-border)]'}`}
             >
               {mode}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <label className="text-sm font-semibold text-[var(--color-content-muted)]">
+          {t('settings.interactionMode', { defaultValue: 'Interaction' })}
+        </label>
+        <div className="flex gap-2">
+          {(['drag', 'tap', 'both'] as InteractionMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => settings.updateSetting('interactionMode', mode)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${settings.interactionMode === mode ? 'bg-[var(--color-primary)] text-[var(--color-primary-fg)] border-[var(--color-primary)]' : 'bg-[var(--color-surface-raised)] text-[var(--color-content)] border-[var(--color-border)]'}`}
+            >
+              {t(`settings.interaction_${mode}`, { defaultValue: mode.charAt(0).toUpperCase() + mode.slice(1) })}
             </button>
           ))}
         </div>
