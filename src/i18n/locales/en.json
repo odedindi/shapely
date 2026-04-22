@@ -49,6 +49,27 @@
   "settings.reveal.hidden": "Hidden",
   "settings.reveal.peek": "Peek",
 
+  "settings.theme.default": "Default",
+  "settings.theme.sunset": "Sunset",
+  "settings.theme.forest": "Forest",
+  "settings.theme.ocean": "Ocean",
+  "settings.theme.candy": "Candy",
+  "settings.theme.monochrome": "Mono",
+
+  "settings.gameMode": "Game Mode",
+  "settings.unique": "Unique",
+  "settings.weighted": "Weighted",
+
+  "settings.interaction_drag": "Drag",
+  "settings.interaction_tap": "Tap",
+  "settings.interaction_both": "Both",
+
+  "settings.gridSizeUnavailable": "Not enough shapes for this grid size",
+
+  "settings.shapes": "Shapes",
+  "settings.shapesSelectAll": "All",
+  "settings.shapesClear": "Clear",
+
   "editor.title": "Shape Editor",
   "editor.library": "My Shapes",
   "editor.newShape": "New Shape",
