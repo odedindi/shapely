@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { BoardState, CardState, Difficulty, GamePhase, GameMode } from '@/shapes/types'
 import { log } from '@/lib/logger'
 
-interface GameState {
+export interface GameState {
   board: BoardState | null
   currentCard: CardState | null
   score: number
@@ -16,6 +16,7 @@ interface GameState {
   levelUpPulse: number
   solvedCells: Set<string>
   gameMode: GameMode
+  cardAppearedAt: number
   startGame: (board: BoardState, gameMode?: GameMode) => void
   submitAnswer: (col: number, row: number) => void
   nextCard: (card: CardState) => void
@@ -40,6 +41,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
   levelUpPulse: 0,
   solvedCells: new Set<string>(),
   gameMode: 'unique',
+  cardAppearedAt: 0,
 
   startGame: (board, gameMode = 'unique') =>
     set({
@@ -93,7 +95,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
     }
   },
 
-  nextCard: (card) => set({ currentCard: card, phase: 'playing' }),
+  nextCard: (card) => set({ currentCard: card, phase: 'playing', cardAppearedAt: performance.now() }),
 
   tickTimer: () => set((s) => ({ timeElapsed: s.timeElapsed + 1 })),
 
@@ -110,6 +112,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
       totalAnswers: 0,
       correctAnswers: 0,
       solvedCells: new Set<string>(),
+      cardAppearedAt: 0,
     })
   },
 
