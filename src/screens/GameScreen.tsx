@@ -37,12 +37,28 @@ export default function GameScreen() {
   const prevStreakRef = useRef(0)
   const prevLevelUpPulseRef = useRef(0)
   const cardAreaRef = useRef<HTMLDivElement>(null)
+  const boardContainerRef = useRef<HTMLDivElement>(null)
+  const [boardContainerSize, setBoardContainerSize] = useState({ width: 0, height: 0 })
 
   const { startNewGame, submitAnswer } = useGameLogic(allShapes)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   )
+
+  useEffect(() => {
+    if (!boardContainerRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setBoardContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        })
+      }
+    })
+    observer.observe(boardContainerRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     store.resetGame()
@@ -233,7 +249,7 @@ export default function GameScreen() {
         />
 
         <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-auto">
+          <div ref={boardContainerRef} className="flex-1 min-h-0 overflow-hidden relative">
             {store.board && (
                 <GameBoard
                   board={store.board}
@@ -246,6 +262,8 @@ export default function GameScreen() {
                   hintQuadrant={hintQuadrant}
                   solvedCells={store.solvedCells}
                   isDragging={isDragging}
+                  containerWidth={boardContainerSize.width}
+                  containerHeight={boardContainerSize.height}
                 />
             )}
           </div>
