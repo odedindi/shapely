@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import type { BoardState, CardState, Difficulty, GamePhase, GameMode } from '@/shapes/types'
 import { log } from '@/lib/logger'
+import { dealUniqueCard, dealWeightedCard } from '@/utils/boardGenerator'
+import { stepDifficulty } from '@/utils/difficultyEngine'
+import { useSettingsStore } from '@/store/settingsStore'
 
 export interface GameState {
   board: BoardState | null
@@ -84,7 +87,37 @@ export const useGameStore = create<GameState>()((set, get) => ({
       })
       if (boardComplete) {
         log.game.info('board complete', { solvedCells: newSolvedCells.size, gridSize })
+        return
       }
+      setTimeout(() => {
+        const s = get()
+        const settings = useSettingsStore.getState()
+        log.game.info('correct timeout fired', { phase: s.phase, board: !!s.board, card: !!s.currentCard })
+        if (!s.board || s.phase !== 'correct') {
+          if (s.phase !== 'correct') log.game.warn('correct timeout: phase not correct, bailing', { phase: s.phase })
+          return
+        }
+        if (settings.adaptiveDifficulty) {
+          const prevRevealMode = settings.cellRevealMode
+          stepDifficulty(s.streak, settings)
+          const nextRevealMode = useSettingsStore.getState().cellRevealMode
+          if (nextRevealMode !== prevRevealMode) {
+            log.game.info('level up triggered', { from: prevRevealMode, to: nextRevealMode })
+            get().triggerLevelUp()
+          }
+        }
+        if (s.gameMode === 'unique') {
+          const nextCard = dealUniqueCard(s.board, s.solvedCells)
+          log.game.info('dealing unique card', { nextCard: !!nextCard, solvedCells: s.solvedCells.size })
+          if (nextCard !== null) {
+            get().nextCard(nextCard)
+          } else {
+            log.game.warn('dealUniqueCard returned null but phase not complete', { phase: s.phase })
+          }
+        } else {
+          get().nextCard(dealWeightedCard(s.board, s.solvedCells))
+        }
+      }, 800)
     } else {
       set({
         phase: newPhase,
@@ -92,6 +125,15 @@ export const useGameStore = create<GameState>()((set, get) => ({
         bestStreak: newBestStreak,
         totalAnswers: totalAnswers + 1,
       })
+      setTimeout(() => {
+        const s = get()
+        log.game.info('wrong timeout fired', { phase: s.phase, card: !!s.currentCard })
+        if (s.phase !== 'wrong') {
+          log.game.warn('wrong timeout: phase not wrong, bailing', { phase: s.phase })
+          return
+        }
+        if (s.currentCard) get().nextCard(s.currentCard)
+      }, 600)
     }
   },
 
