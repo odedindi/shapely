@@ -13,6 +13,9 @@ export interface GameSettingsState {
   interactionMode: InteractionMode
   activeShapeIds: string[] | 'all'
   bestScores: Record<string, number>
+  boardSnapOnRelease: boolean
+  boardAutoCenterSelected: boolean
+  boardReducedMotion: boolean
   updateSetting: <K extends keyof Omit<GameSettingsState, 'updateSetting' | 'updateBestScore'>>(
     key: K,
     value: GameSettingsState[K]
@@ -32,6 +35,9 @@ export const useGameSettingsStore = create<GameSettingsState>()(
       interactionMode: 'both' as InteractionMode,
       activeShapeIds: 'all' as const,
       bestScores: {},
+      boardSnapOnRelease: false,
+      boardAutoCenterSelected: false,
+      boardReducedMotion: false,
       updateSetting: (key, value) =>
         set((s) => {
           log.ui.info('game setting changed', { key, from: s[key], to: value })

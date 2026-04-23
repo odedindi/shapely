@@ -363,6 +363,63 @@ export default function SettingsPanel({ availableShapeCount = Infinity, allShape
         </div>
       </section>
 
+      <section className="flex flex-col gap-4">
+        <SectionHeader label={t('settings.sectionNavigation', { defaultValue: 'Board Navigation' })} />
+
+        <div className="flex flex-col gap-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={game.boardSnapOnRelease}
+              onChange={(e) => game.updateSetting('boardSnapOnRelease', e.target.checked)}
+              className="w-4 h-4 accent-[var(--color-primary)]"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm text-[var(--color-content)]">
+                {t('settings.boardSnapOnRelease', { defaultValue: 'Snap to grid' })}
+              </span>
+              <span className="text-xs text-[var(--color-content-muted)]">
+                {t('settings.boardSnapOnReleaseDesc', { defaultValue: 'Settle to nearest cell after scrolling' })}
+              </span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={game.boardAutoCenterSelected}
+              onChange={(e) => game.updateSetting('boardAutoCenterSelected', e.target.checked)}
+              className="w-4 h-4 accent-[var(--color-primary)]"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm text-[var(--color-content)]">
+                {t('settings.boardAutoCenterSelected', { defaultValue: 'Center on selection' })}
+              </span>
+              <span className="text-xs text-[var(--color-content-muted)]">
+                {t('settings.boardAutoCenterSelectedDesc', { defaultValue: 'Pan to selected cell when tapped' })}
+              </span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={game.boardReducedMotion}
+              onChange={(e) => game.updateSetting('boardReducedMotion', e.target.checked)}
+              className="w-4 h-4 accent-[var(--color-primary)]"
+            />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm text-[var(--color-content)]">
+                {t('settings.boardReducedMotion', { defaultValue: 'Reduced motion' })}
+              </span>
+              <span className="text-xs text-[var(--color-content-muted)]">
+                {t('settings.boardReducedMotionDesc', { defaultValue: 'Disable settle animations on the board' })}
+              </span>
+            </div>
+          </label>
+        </div>
+      </section>
+
       <AnimatePresence>
         {showAddModal && (
           <m.div

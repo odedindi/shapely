@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -16,6 +16,7 @@ import SettingsPanel from '@/components/SettingsPanel'
 import LevelUpOverlay from '@/components/LevelUpOverlay'
 import VictoryScreen from '@/screens/VictoryScreen'
 import { Sparkles } from '@/components/magic/Sparkles'
+import { useHaptics } from '@/hooks/useHaptics'
 import { log } from '@/lib/logger'
 import { saveLeaderboardEntry, getLeaderboardEntries, type LeaderboardEntry } from '@/db/leaderboard'
 
@@ -44,8 +45,15 @@ export default function GameScreen() {
 
   const { startNewGame, submitAnswer } = useGameLogic(allShapes)
 
+  const isTouchDevice = useMemo(
+    () => window.matchMedia('(pointer: coarse)').matches,
+    []
+  )
+
+  const haptics = useHaptics()
+
   const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 8 } })
-  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 10 } })
   const sensors = useSensors(
     ...(settings.interactionMode !== 'tap' ? [mouseSensor, touchSensor] : []),
   )
@@ -75,7 +83,16 @@ export default function GameScreen() {
   }, [allShapes.length, store.phase, startNewGame])
 
   useEffect(() => {
-    setCardSelected(false)
+    if (store.phase === 'playing' && isTouchDevice) {
+      setCardSelected(true)
+    } else if (store.phase !== 'playing') {
+      setCardSelected(false)
+    }
+  }, [store.phase, isTouchDevice])
+
+  useEffect(() => {
+    if (store.phase === 'correct') haptics.correct()
+    else if (store.phase === 'wrong') haptics.wrong()
   }, [store.phase])
 
   useEffect(() => {
@@ -93,6 +110,7 @@ export default function GameScreen() {
     prevStreakRef.current = current
     if (current > 0 && current % 3 === 0 && current !== prev) {
       log.game.info('streak milestone sparkles', { streak: current })
+      haptics.streak()
       if (cardAreaRef.current) {
         const rect = cardAreaRef.current.getBoundingClientRect()
         setSparklesPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
@@ -125,6 +143,7 @@ export default function GameScreen() {
     setIsDragging(true)
     setCardSelected(false)
     setActiveCellId(null)
+    haptics.tap()
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -149,6 +168,8 @@ export default function GameScreen() {
     const droppedOnCell = typeof overId === 'string' && overId.startsWith('cell-')
     if (droppedOnCell) {
       setCardSelected(false)
+    } else {
+      setCardSelected(isTouchDevice && store.phase === 'playing')
     }
     if (store.phase !== 'playing') return
     if (droppedOnCell) {
@@ -279,6 +300,9 @@ export default function GameScreen() {
                   isDragging={isDragging}
                   containerWidth={boardContainerSize.width}
                   containerHeight={boardContainerSize.height}
+                  boardSnapOnRelease={settings.boardSnapOnRelease}
+                  boardAutoCenterSelected={settings.boardAutoCenterSelected}
+                  boardReducedMotion={settings.boardReducedMotion}
                 />
             )}
           </div>
@@ -302,6 +326,7 @@ export default function GameScreen() {
                   onSelect={handleCardSelect}
                   phase={store.phase}
                   combinationStyle={settings.combinationStyle}
+                  isTouchDevice={isTouchDevice}
                 />
               </div>
             )}
