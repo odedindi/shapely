@@ -19,11 +19,12 @@ interface BoardCellProps {
   row: number
   isSolved?: boolean
   onSelect: (col: number, row: number) => void
+  className?: string
 }
 
 const BoardCell = memo(function BoardCell({
   columnShape, rowShape, combinationStyle, revealMode,
-  isCorrect, isSelected, isHintTarget, isDragging, phase, col, row, isSolved, onSelect,
+  isCorrect, isSelected, isHintTarget, isDragging, phase, col, row, isSolved, onSelect, className
 }: BoardCellProps) {
   const droppableId = `cell-${col}-${row}`
   const { setNodeRef, isOver } = useDroppable({ id: droppableId })
@@ -78,6 +79,7 @@ const BoardCell = memo(function BoardCell({
         'self-center justify-self-center-safe',
         isSolved && 'pointer-events-none',
         borderClass,
+        className
       )}
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{
