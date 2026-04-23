@@ -14,6 +14,13 @@ function vibrate(pattern: number | number[]) {
   }
 }
 
+export interface BoardBonusBreakdown {
+  speedClear: number
+  perfectBoard: number
+  flawlessStreak: number
+  difficultyMultiplier: number
+}
+
 export interface GameState {
   board: BoardState | null
   currentCard: CardState | null
@@ -30,14 +37,24 @@ export interface GameState {
   gameMode: GameMode
   cardAppearedAt: number
   currentReplayEvents: ReplayEvent[]
+  responseTimes: number[]
+  boardBonus: number
+  boardBonusBreakdown: BoardBonusBreakdown
   startGame: (board: BoardState, gameMode?: GameMode) => void
-  submitAnswer: (col: number, row: number) => void
+  submitAnswer: (col: number, row: number, responseTimeMs?: number) => void
   nextCard: (card: CardState) => void
   tickTimer: () => void
   resetGame: () => void
   triggerLevelUp: () => void
   markCellSolved: (col: number, row: number) => void
   isBoardComplete: () => boolean
+}
+
+const initialBoardBonusBreakdown: BoardBonusBreakdown = {
+  speedClear: 0,
+  perfectBoard: 0,
+  flawlessStreak: 0,
+  difficultyMultiplier: 1.0,
 }
 
 export const useGameStore = create<GameState>()((set, get) => ({
@@ -56,6 +73,9 @@ export const useGameStore = create<GameState>()((set, get) => ({
   gameMode: 'unique',
   cardAppearedAt: 0,
   currentReplayEvents: [],
+  responseTimes: [],
+  boardBonus: 0,
+  boardBonusBreakdown: { ...initialBoardBonusBreakdown },
 
   startGame: (board, gameMode = 'unique') =>
     set({
@@ -70,10 +90,13 @@ export const useGameStore = create<GameState>()((set, get) => ({
       solvedCells: new Set<string>(),
       gameMode,
       currentReplayEvents: [{ type: 'startGame', board, gameMode, ts: Date.now() }],
+      responseTimes: [],
+      boardBonus: 0,
+      boardBonusBreakdown: { ...initialBoardBonusBreakdown },
     }),
 
-  submitAnswer: (col, row) => {
-    const { currentCard, phase, score, streak, bestStreak, totalAnswers, correctAnswers, board, currentReplayEvents } = get()
+  submitAnswer: (col, row, responseTimeMs) => {
+    const { currentCard, phase, score, streak, bestStreak, totalAnswers, correctAnswers, board, currentReplayEvents, timeElapsed, responseTimes } = get()
     if (!currentCard || phase !== 'playing') return
     const correct =
       currentCard.correctCell.col === col && currentCard.correctCell.row === row
@@ -84,23 +107,44 @@ export const useGameStore = create<GameState>()((set, get) => ({
     const replayEvent: ReplayEvent = { type: 'submitAnswer', col, row, ts: Date.now() }
 
     if (correct) {
+      const basePoints = 100
+      const streakMultiplier = 1 + streak * 0.1
+      const speedBonus = responseTimeMs !== undefined
+        ? Math.max(0, Math.floor((5000 - responseTimeMs) / 100))
+        : 0
+      const answerPoints = Math.round(basePoints * streakMultiplier) + speedBonus
+      const newResponseTimes = [...responseTimes, responseTimeMs ?? 0]
+
       const key = `${col}-${row}`
       const newSolvedCells = new Set(get().solvedCells)
       newSolvedCells.add(key)
       const gridSize = board?.gridSize ?? 0
       const boardComplete = newSolvedCells.size >= gridSize * gridSize
       const updatedEvents = [...currentReplayEvents, replayEvent]
-      set({
-        phase: boardComplete ? 'complete' : newPhase,
-        score: score + 10 + streak,
-        streak: newStreak,
-        bestStreak: newBestStreak,
-        totalAnswers: totalAnswers + 1,
-        correctAnswers: correctAnswers + 1,
-        solvedCells: newSolvedCells,
-        currentReplayEvents: updatedEvents,
-      })
+
       if (boardComplete) {
+        const settings = useGameSettingsStore.getState()
+        const speedClearThreshold = gridSize * gridSize * 5
+        const speedClear = timeElapsed <= speedClearThreshold ? 500 : 0
+        const perfectBoard = totalAnswers === correctAnswers ? 300 : 0
+        const flawlessStreak = newStreak === gridSize * gridSize ? 200 : 0
+        const difficultyMultiplier = settings.cellRevealMode === 'hidden' ? 1.5 : 1.0
+        const rawBoardBonus = speedClear + perfectBoard + flawlessStreak
+        const totalBoardBonus = Math.round(rawBoardBonus * difficultyMultiplier)
+
+        set({
+          phase: 'complete',
+          score: score + answerPoints + totalBoardBonus,
+          streak: newStreak,
+          bestStreak: newBestStreak,
+          totalAnswers: totalAnswers + 1,
+          correctAnswers: correctAnswers + 1,
+          solvedCells: newSolvedCells,
+          currentReplayEvents: updatedEvents,
+          responseTimes: newResponseTimes,
+          boardBonus: totalBoardBonus,
+          boardBonusBreakdown: { speedClear, perfectBoard, flawlessStreak, difficultyMultiplier },
+        })
         log.game.info('board complete', { solvedCells: newSolvedCells.size, gridSize })
         vibrate(50)
         triggerConfetti()
@@ -119,6 +163,18 @@ export const useGameStore = create<GameState>()((set, get) => ({
         }).catch((err: unknown) => log.game.error('failed to save replay', err))
         return
       }
+
+      set({
+        phase: newPhase,
+        score: score + answerPoints,
+        streak: newStreak,
+        bestStreak: newBestStreak,
+        totalAnswers: totalAnswers + 1,
+        correctAnswers: correctAnswers + 1,
+        solvedCells: newSolvedCells,
+        currentReplayEvents: updatedEvents,
+        responseTimes: newResponseTimes,
+      })
       vibrate(50)
       triggerConfetti()
       setTimeout(() => {
@@ -195,6 +251,9 @@ export const useGameStore = create<GameState>()((set, get) => ({
       solvedCells: new Set<string>(),
       cardAppearedAt: 0,
       currentReplayEvents: [],
+      responseTimes: [],
+      boardBonus: 0,
+      boardBonusBreakdown: { ...initialBoardBonusBreakdown },
     })
   },
 

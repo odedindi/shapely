@@ -19,6 +19,8 @@ import { Sparkles } from '@/components/magic/Sparkles'
 import { useHaptics } from '@/hooks/useHaptics'
 import { log } from '@/lib/logger'
 import { saveLeaderboardEntry, getLeaderboardEntries, type LeaderboardEntry } from '@/db/leaderboard'
+import { getLevelForXP, type LevelDefinition } from '@/progression/levels'
+import { useProgressStore } from '@/store/progressStore'
 
 export default function GameScreen() {
   const { t } = useTranslation()
@@ -37,6 +39,19 @@ export default function GameScreen() {
   const [hintQuadrant, setHintQuadrant] = useState<'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | null>(null)
   const [victoryStats, setVictoryStats] = useState<{ isNewRecord: boolean; previousBest: number } | null>(null)
   const [topEntries, setTopEntries] = useState<LeaderboardEntry[]>([])
+  const [victoryXP, setVictoryXP] = useState<{
+    earned: number
+    totalBefore: number
+    totalAfter: number
+    didLevelUp: boolean
+    levelBefore: LevelDefinition
+    levelAfter: LevelDefinition
+  } | null>(null)
+  const [victoryGameStats, setVictoryGameStats] = useState<{
+    fastestAnswer: number
+    avgResponseMs: number
+    clutchRate: number
+  } | null>(null)
   const prevStreakRef = useRef(0)
   const prevLevelUpPulseRef = useRef(0)
   const cardAreaRef = useRef<HTMLDivElement>(null)
@@ -127,16 +142,44 @@ export default function GameScreen() {
         const isNewRecord = store.score > prevBest
         setVictoryStats({ isNewRecord, previousBest: prevBest })
         settings.updateBestScore(bestKey, store.score)
-        
+
         getLeaderboardEntries({ gridSize: settings.gridSize, gameMode: store.gameMode }, 5).then((top) => {
           setTopEntries(top)
+        })
+
+        const rTimes = store.responseTimes.filter(t => t > 0)
+        const fastestAnswer = rTimes.length > 0 ? Math.min(...rTimes) : 0
+        const avgResponseMs = rTimes.length > 0 ? rTimes.reduce((a, b) => a + b, 0) / rTimes.length : 0
+        const clutchRate = rTimes.length > 0 ? rTimes.filter(t => t < 1000).length / rTimes.length : 0
+        setVictoryGameStats({ fastestAnswer, avgResponseMs, clutchRate })
+
+        const progress = useProgressStore.getState()
+        const prevTotalXP = progress.totalXP
+        const currentLevel = getLevelForXP(prevTotalXP)
+        const baseXP = Math.floor(store.score / 10)
+        const perfectBonus = store.boardBonusBreakdown.perfectBoard > 0 ? 30 : 0
+        const sharpshooterBonus = currentLevel.level >= 12 && store.boardBonusBreakdown.perfectBoard > 0 ? 50 : 0
+        const xpMultiplier = currentLevel.xpMultiplier ?? 1.0
+        const totalXPEarned = Math.round((baseXP + perfectBonus + sharpshooterBonus) * xpMultiplier)
+        const newTotalXP = prevTotalXP + totalXPEarned
+        progress.awardXP(totalXPEarned)
+        const levelAfter = getLevelForXP(newTotalXP)
+        setVictoryXP({
+          earned: totalXPEarned,
+          totalBefore: prevTotalXP,
+          totalAfter: newTotalXP,
+          didLevelUp: levelAfter.level > currentLevel.level,
+          levelBefore: currentLevel,
+          levelAfter,
         })
       }
     } else {
       setVictoryStats(null)
       setTopEntries([])
+      setVictoryXP(null)
+      setVictoryGameStats(null)
     }
-  }, [store.phase, store.score, store.gameMode, settings.gridSize, settings.bestScores, settings.updateBestScore, victoryStats])
+  }, [store.phase, store.score, store.gameMode, store.responseTimes, store.boardBonusBreakdown, settings.gridSize, settings.bestScores, settings.updateBestScore, victoryStats])
 
   function handleDragStart(_event: DragStartEvent) {
     if (settings.interactionMode === 'tap') return
@@ -268,6 +311,17 @@ export default function GameScreen() {
         onHome={() => navigate('/')}
         onSaveRecord={handleSaveRecord}
         topEntries={topEntries}
+        boardBonusBreakdown={store.boardBonusBreakdown}
+        boardBonus={store.boardBonus}
+        fastestAnswer={victoryGameStats?.fastestAnswer ?? 0}
+        avgResponseMs={victoryGameStats?.avgResponseMs ?? 0}
+        clutchRate={victoryGameStats?.clutchRate ?? 0}
+        xpEarned={victoryXP?.earned ?? 0}
+        xpBefore={victoryXP?.totalBefore ?? 0}
+        xpAfter={victoryXP?.totalAfter ?? 0}
+        didLevelUp={victoryXP?.didLevelUp ?? false}
+        levelBefore={victoryXP?.levelBefore ?? null}
+        levelAfter={victoryXP?.levelAfter ?? null}
       />
     )
   }

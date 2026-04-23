@@ -42,10 +42,10 @@ export function useGameLogic(allShapes: import('@/shapes/types').ShapeDefinition
       const capturedSolvedCount = state.solvedCells.size
       const capturedAppearedAt = state.cardAppearedAt
       const correct = capturedCard.correctCell.col === col && capturedCard.correctCell.row === row
-
-      state.submitAnswer(col, row)
-
       const responseTimeMs = performance.now() - capturedAppearedAt
+
+      state.submitAnswer(col, row, responseTimeMs <= 10000 ? responseTimeMs : undefined)
+
       if (responseTimeMs <= 10000) {
         const event: AnswerEvent = {
           id: crypto.randomUUID(),
