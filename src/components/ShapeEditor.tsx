@@ -10,6 +10,20 @@ import type { CustomShapeRecord } from '@/shapes/types'
 import { normalizeSvgContent } from '@/shapes/svgNormalize'
 import { log } from '@/lib/logger'
 
+// Re-implemented locally to avoid a circular import from customShapeAdapter
+function applyParamsToBody(body: string, params: PreviewParams): string {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(`<svg>${body}</svg>`, 'image/svg+xml')
+  const elements = doc.querySelectorAll('*')
+  elements.forEach((el) => {
+    if (!el.hasAttribute('fill') || el.getAttribute('fill') === 'none') return
+    el.setAttribute('fill', params.fillColor)
+    el.setAttribute('stroke', params.strokeColor)
+    el.setAttribute('stroke-width', String(params.strokeWidth))
+  })
+  return doc.documentElement.innerHTML
+}
+
 interface ShapeEditorProps {
   record?: CustomShapeRecord
   onSave: (name: string, svgBody: string, viewBox: string) => Promise<void>
@@ -30,7 +44,7 @@ const DEFAULT_PARAMS: PreviewParams = {
   strokeWidth: 2,
   rotation: 0,
   fillColor: '#6366f1',
-  strokeColor: 'none',
+  strokeColor: '#94a3b8',
   opacity: 1,
 }
 
@@ -130,73 +144,92 @@ function SvgCodeEditor({ value, onChange }: { value: string; onChange: (v: strin
 }
 
 interface PreviewTileProps {
-  sanitized: string
+  body: string
+  viewBox: string
   params: PreviewParams
   label: string
   mode: 'overlay' | 'silhouette' | 'nested' | 'side-by-side'
 }
 
-function PreviewTile({ sanitized, params, label, mode }: PreviewTileProps) {
-  const { fillColor, strokeColor, rotation, opacity } = params
+const VB = 100
 
-  function layer(color: string, rotateDeg: number, layerOpacity: number, extraClass = '') {
-    return (
-      <div
-        className={`absolute inset-0 flex items-center justify-center ${extraClass}`}
-        style={{ color, transform: `rotate(${rotateDeg}deg)`, opacity: layerOpacity }}
-        dangerouslySetInnerHTML={{ __html: sanitized }}
-      />
-    )
-  }
+function PreviewTile({ body, viewBox, params, label, mode }: PreviewTileProps) {
+  const { fillColor, strokeColor, strokeWidth, rotation, opacity, size } = params
 
-  let content: React.ReactNode
+  const primaryBody = applyParamsToBody(body, { ...params, fillColor, strokeColor })
+  const secondaryBody = applyParamsToBody(body, { ...params, fillColor: strokeColor, strokeColor: fillColor })
+
+  let svgContent: React.ReactNode
 
   if (mode === 'overlay') {
-    content = (
-      <div className="relative w-full h-full">
-        {layer(fillColor, rotation, opacity)}
-        {layer(strokeColor, rotation + 30, opacity * 0.5)}
-      </div>
+    const frontSize = VB * 0.72
+    const frontOffset = (VB - frontSize) / 2
+    svgContent = (
+      <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
+        <svg x={0} y={0} width={VB} height={VB} viewBox={viewBox} opacity={opacity}
+          style={{ transform: `rotate(${rotation}deg)`, transformOrigin: '50% 50%' }}
+          dangerouslySetInnerHTML={{ __html: primaryBody }}
+        />
+        <g transform={`rotate(30 50 50)`} opacity={opacity * 0.85}>
+          <svg x={frontOffset} y={frontOffset} width={frontSize} height={frontSize} viewBox={viewBox}
+            dangerouslySetInnerHTML={{ __html: secondaryBody }}
+          />
+        </g>
+      </svg>
     )
   } else if (mode === 'silhouette') {
-    content = (
-      <div className="relative w-full h-full">
-        {layer('var(--color-content)', rotation, 0.5)}
-        {layer('var(--color-content)', rotation + 20, 0.5)}
-      </div>
+    const SIZE = VB * 0.72
+    const OFFSET = VB * 0.28
+    svgContent = (
+      <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
+        <svg x={0} y={0} width={SIZE} height={SIZE} viewBox={viewBox} opacity={0.82}
+          dangerouslySetInnerHTML={{ __html: primaryBody }}
+        />
+        <svg x={OFFSET} y={OFFSET} width={SIZE} height={SIZE} viewBox={viewBox} opacity={0.72}
+          dangerouslySetInnerHTML={{ __html: secondaryBody }}
+        />
+      </svg>
     )
   } else if (mode === 'nested') {
-    content = (
-      <div className="relative w-full h-full">
-        {layer(fillColor, rotation, opacity)}
-        <div
-          className="absolute inset-[22%] flex items-center justify-center"
-          style={{ color: strokeColor, transform: `rotate(${rotation}deg)`, opacity: opacity * 0.8 }}
-          dangerouslySetInnerHTML={{ __html: sanitized }}
+    const innerSize = VB * 0.46
+    const innerOffset = (VB - innerSize) / 2
+    const frameBody = applyParamsToBody(body, { ...params, fillColor: 'none', strokeColor: fillColor, strokeWidth: Math.max(strokeWidth, 3) })
+    svgContent = (
+      <svg width="100%" height="100%" viewBox={`0 0 ${VB} ${VB}`} overflow="visible">
+        <svg x={0} y={0} width={VB} height={VB} viewBox={viewBox}
+          dangerouslySetInnerHTML={{ __html: frameBody }}
         />
-      </div>
+        <svg x={innerOffset} y={innerOffset} width={innerSize} height={innerSize} viewBox={viewBox} opacity={opacity}
+          dangerouslySetInnerHTML={{ __html: secondaryBody }}
+        />
+      </svg>
     )
   } else {
-    content = (
-      <div className="w-full h-full flex items-center justify-center gap-[4%]">
-        <div
-          className="w-[46%] aspect-square"
-          style={{ color: fillColor, transform: `rotate(${rotation}deg)`, opacity }}
-          dangerouslySetInnerHTML={{ __html: sanitized }}
+    const HALF = 100
+    const GAP = 10
+    const TOTAL_W = HALF * 2 + GAP
+    svgContent = (
+      <svg width="100%" height="100%" viewBox={`0 0 ${TOTAL_W} ${HALF}`}>
+        <svg x={0} y={0} width={HALF} height={HALF} viewBox={viewBox} opacity={opacity}
+          dangerouslySetInnerHTML={{ __html: primaryBody }}
         />
-        <div
-          className="w-[46%] aspect-square"
-          style={{ color: strokeColor, transform: `rotate(${rotation}deg)`, opacity }}
-          dangerouslySetInnerHTML={{ __html: sanitized }}
+        <line x1={HALF + GAP / 2} y1={15} x2={HALF + GAP / 2} y2={85}
+          stroke="var(--color-border)" strokeWidth="1.5" opacity="0.5"
         />
-      </div>
+        <svg x={HALF + GAP} y={0} width={HALF} height={HALF} viewBox={viewBox} opacity={opacity}
+          dangerouslySetInnerHTML={{ __html: secondaryBody }}
+        />
+      </svg>
     )
   }
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="w-full aspect-square rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-hidden p-2">
-        {content}
+      <div
+        className="w-full aspect-square rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-hidden"
+        style={{ padding: `${(100 - size) / 2}%` }}
+      >
+        {svgContent}
       </div>
       <span className="text-xs text-[var(--color-content-muted)]">{label}</span>
     </div>
@@ -243,7 +276,6 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
   const [params, setParams] = useState<PreviewParams>(DEFAULT_PARAMS)
 
   const sanitized = sanitizeSvg(svgBody)
-
   function setParam<K extends keyof PreviewParams>(key: K, value: PreviewParams[K]) {
     setParams((prev) => ({ ...prev, [key]: value }))
   }
@@ -389,7 +421,7 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
                 </span>
                 <input
                   type="color"
-                  value={params.strokeColor === 'none' ? '#000000' : params.strokeColor}
+                  value={params.strokeColor}
                   onChange={(e) => setParam('strokeColor', e.target.value)}
                   className="w-9 h-9 rounded-lg border border-[var(--color-border)] cursor-pointer bg-transparent p-0.5"
                 />
@@ -405,7 +437,8 @@ export default function ShapeEditor({ record, onSave, onCancel }: ShapeEditorPro
               {previewModes.map(({ mode, label }) => (
                 <PreviewTile
                   key={mode}
-                  sanitized={sanitized}
+                  body={sanitized}
+                  viewBox={detectedViewBox}
                   params={params}
                   label={label}
                   mode={mode}
