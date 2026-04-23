@@ -13,6 +13,11 @@ export interface LeaderboardEntry {
   gridSize: number
   gameMode: string
   recordedAt: number
+  boardBonus?: number
+  fastestAnswer?: number
+  avgResponseMs?: number
+  clutchRate?: number
+  xpEarned?: number
 }
 
 const STORE_NAME = 'leaderboard'

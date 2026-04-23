@@ -14,9 +14,10 @@ interface PlayerCardProps {
   phase: GamePhase
   isGhost?: boolean
   combinationStyle?: CombinationStyle
+  isTouchDevice?: boolean
 }
 
-export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost = false, combinationStyle = 'overlay' }: PlayerCardProps) {
+export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost = false, combinationStyle = 'overlay', isTouchDevice = false }: PlayerCardProps) {
   const { t } = useTranslation()
   const interactionMode = useGameSettingsStore((s) => s.interactionMode)
 
@@ -76,7 +77,7 @@ export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost 
         'rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]',
         'touch-none select-none',
         'w-full flex flex-col overflow-hidden',
-        isGhost ? 'cursor-grabbing' : 'cursor-grab active:cursor-grabbing',
+        isGhost ? 'cursor-grabbing' : isTouchDevice ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
       )}
       style={{ ...glowStyle, ...dndStyle }}
       initial={{ opacity: 0, y: 20, scale: 0.92 }}
@@ -116,7 +117,7 @@ export default function PlayerCard({ card, isSelected, onSelect, phase, isGhost 
           mode={combinationStyle}
         />
 
-        {!isGhost && (
+        {!isGhost && !isTouchDevice && (
           <div className="absolute bottom-1.5 end-1.5 opacity-30">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[var(--color-content-muted)]">
               <circle cx="9" cy="7" r="2" />

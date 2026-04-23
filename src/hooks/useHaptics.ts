@@ -8,6 +8,7 @@ export function useHaptics() {
   return {
     correct: () => vibrate(50),
     wrong: () => vibrate([30, 50, 30]),
-    tap: () => vibrate(10),
+    tap: () => vibrate(15),
+    streak: () => vibrate([20, 30, 20, 30, 80]),
   }
 }

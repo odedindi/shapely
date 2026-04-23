@@ -1,5 +1,5 @@
 const DB_NAME = 'shapely'
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 export function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -31,6 +31,9 @@ export function openDB(): Promise<IDBDatabase> {
         const replaysStore = db.createObjectStore('replays', { keyPath: 'id' })
         replaysStore.createIndex('by-profile', 'profileId', { unique: false })
         replaysStore.createIndex('by-recorded-at', 'recordedAt', { unique: false })
+      }
+      if (!db.objectStoreNames.contains('player-progress')) {
+        db.createObjectStore('player-progress', { keyPath: 'profileId' })
       }
     }
     request.onsuccess = () => resolve(request.result)
