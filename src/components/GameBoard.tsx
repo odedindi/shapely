@@ -74,18 +74,17 @@ export default function GameBoard({
           gridTemplateRows: `${headerColWidth}px repeat(${gridSize}, ${cellSize}px)`,
           gap: '8px',
           width: 'fit-content',
-          minWidth: '100%'
+          minWidth: '100%',
         }}>
           <div 
-            style={{ position: 'sticky', top: 0, insetInlineStart: 0, zIndex: 3 }} 
-            className="bg-[var(--color-surface-alt)]"
+            style={{ position: 'sticky', top: 0, insetInlineStart: 0, zIndex: 3, backgroundColor: 'var(--color-surface-alt)', boxShadow: '0 8px 0 var(--color-surface-alt)' }} 
           />
 
           {columnShapes.map((shape, col) => (
             <m.div 
               key={shape.id} 
-              style={{ position: 'sticky', top: 0, zIndex: 2, y: colHeaderY, opacity: colHeaderOpacity }}
-              className="flex items-center justify-center bg-[var(--color-surface-alt)]"
+              style={{ position: 'sticky', top: 0, zIndex: 2, y: colHeaderY, opacity: colHeaderOpacity, backgroundColor: 'var(--color-surface-alt)', boxShadow: '0 8px 0 var(--color-surface-alt)' }}
+              className="flex items-center justify-center"
             >
               <div className="w-[65%] aspect-square min-w-[28px] max-w-[64px]">
                 {shape.render(headerParams(col + 1))}
@@ -96,8 +95,8 @@ export default function GameBoard({
           {rowShapes.map((rowShape, row) => (
             <Fragment key={rowShape.id}>
               <m.div 
-                style={{ position: 'sticky', insetInlineStart: 0, zIndex: 2, x: rowHeaderX, opacity: rowHeaderOpacity }}
-                className="flex items-center justify-center bg-[var(--color-surface-alt)]"
+                style={{ position: 'sticky', insetInlineStart: 0, zIndex: 2, x: rowHeaderX, opacity: rowHeaderOpacity, backgroundColor: 'var(--color-surface-alt)', boxShadow: '8px 0 0 var(--color-surface-alt)' }}
+                className="flex items-center justify-center"
               >
                 <div className="w-[65%] aspect-square min-w-[28px] max-w-[64px]">
                   {rowShape.render(headerParams(row + 5))}
