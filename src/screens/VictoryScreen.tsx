@@ -300,7 +300,7 @@ export default function VictoryScreen({
                 {t('leaderboard.saved')}
               </div>
             ) : (
-              <div className="flex gap-2 w-full">
+              <div className="flex gap-2 w-full flex-wrap md:flex-nowrap">
                 <input
                   type="text"
                   maxLength={20}
@@ -313,7 +313,7 @@ export default function VictoryScreen({
                 <Button
                   onClick={handleSave}
                   disabled={!playerName.trim()}
-                  className="h-auto py-3 px-6 rounded-xl font-bold"
+                  className="h-auto py-3 px-6 rounded-xl font-bold w-full md:w-auto"
                 >
                   {t('leaderboard.saveRecord')}
                 </Button>
