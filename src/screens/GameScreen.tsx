@@ -250,7 +250,11 @@ export default function GameScreen() {
   }
 
   function handleCardSelect() {
-    setCardSelected((v) => !v)
+    if (isTouchDevice) {
+      setCardSelected(true)
+    } else {
+      setCardSelected((v) => !v)
+    }
   }
 
   function handleBack() {
